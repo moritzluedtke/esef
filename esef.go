@@ -1,16 +1,14 @@
 package main
 
 import (
-	"fmt"
 	"fyne.io/fyne/v2"
 	"fyne.io/fyne/v2/app"
 	"fyne.io/fyne/v2/container"
-	"fyne.io/fyne/v2/theme"
 	"fyne.io/fyne/v2/widget"
 )
 
 var WindowSize = fyne.NewSize(900, 600)
-var DialogSize = fyne.NewSize(800, 500)
+var Window fyne.Window
 
 func main() {
 	buildMainWindow().ShowAndRun()
@@ -18,9 +16,11 @@ func main() {
 
 func buildMainWindow() fyne.Window {
 	application := app.New()
-	window := application.NewWindow("ESEF - by Moritz Lüdtke")
+	Window = application.NewWindow("ESEF v0.1 alpha - by Moritz Lüdtke")
 
 	inputEntry := widget.NewMultiLineEntry()
+	inputEntry.Text = GetExplainApiOutputExample()
+
 	outputEntry := widget.NewMultiLineEntry()
 
 	inputLabel := widget.NewLabel("Input")
@@ -29,43 +29,59 @@ func buildMainWindow() fyne.Window {
 	outputLabel := widget.NewLabel("Output")
 	outputLabel.Alignment = fyne.TextAlignCenter
 
-	window.SetContent(container.NewBorder(
+	Window.SetContent(container.NewBorder(
 		nil,
-		widget.NewButtonWithIcon("Format", theme.FileIcon(), func() {
-			formatInput(inputEntry.Text)
+		widget.NewButton("Format", func() {
+			handleFormatButtonClick(inputEntry, outputEntry)
 		}),
 		nil,
 		nil,
 		container.NewAdaptiveGrid(
 			2,
-			container.NewBorder(
-				inputLabel,
-				nil,
-				nil,
-				nil,
-				inputEntry,
-			),
-			container.NewBorder(
-				outputLabel,
-				widget.NewButton("Copy", func() {
-
-				}),
-				nil,
-				nil,
-				outputEntry,
-			),
+			buildInputArea(inputLabel, inputEntry),
+			buildOutputArea(outputLabel, outputEntry),
 		),
 	),
 	)
 
-	application.Settings().SetTheme(theme.LightTheme())
+	Window.Resize(WindowSize)
+	Window.CenterOnScreen()
 
-	window.Resize(WindowSize)
-	window.CenterOnScreen()
-
-	return window
+	return Window
 }
 
-func formatInput(input string) {
-	fmt.Println(input)
+func buildOutputArea(outputLabel *widget.Label, outputEntry *widget.Entry) *fyne.Container {
+	return container.NewBorder(
+		outputLabel,
+		widget.NewButton("Copy", func() {
+			handleCopyOutputButtonClick(outputEntry.Text)
+		}),
+		nil,
+		nil,
+		outputEntry,
+	)
+}
+
+func buildInputArea(inputLabel *widget.Label, inputEntry *widget.Entry) *fyne.Container {
+	return container.NewBorder(
+		inputLabel,
+		nil,
+		nil,
+		nil,
+		inputEntry,
+	)
+}
+
+func handleFormatButtonClick(inputEntry *widget.Entry, outputEntry *widget.Entry) {
+	outputEntry.SetText(formatInputString(inputEntry.Text))
+}
+
+func handleCopyOutputButtonClick(output string) {
+	Window.Clipboard().SetContent(output)
+
+	fyne.CurrentApp().SendNotification(fyne.NewNotification("ESEF", "Copied output to clipboard!"))
+}
+
+func formatInputString(input string) string {
+	return ExtractDataFromExplainAPI(input)
 }
