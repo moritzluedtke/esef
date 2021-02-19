@@ -70,6 +70,7 @@ fyne package -os darwin -appVersion "0.3.0" -icon icon.png
 - If the `fyne` cmd command is old:
   1. Try updating it with some kind of `go get update ...` command.
   2. If that does not work try deleting the executable in `GOPATH/bin` and reinstalling it afterwards.
+- Go Module support must be enabled in IntelliJ. Also, worth reading [is this article about Go Modules](https://insujang.github.io/2020-04-04/go-modules/).  
 
 ## Credits
 The app icon is from the [Material Icon Set](https://material.io/resources/icons/?search=tree&icon=account_tree&style=baseline).
