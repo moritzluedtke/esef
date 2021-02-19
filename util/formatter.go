@@ -1,4 +1,4 @@
-package main
+package util
 
 import (
 	"fmt"
@@ -14,6 +14,7 @@ const LShape = "└─ "
 const EmptyStartString = ""
 
 const DocumentInfoHeaderFormat = "index: %s\ndocumentId: %s\nmatched: %t\nexplanation:\n%s"
+const ExplainNoteFormat = "%s%s%f (%s)\n"
 
 func FormatExplainApiDocument(doc ExplainAPIDocument, useTreeFormat bool) string {
 	var formattedExplanation string
@@ -51,7 +52,7 @@ func formatExplainNodesToTreeFormat(previousIndentation string, isRootNode bool,
 		isLastInTreeLevel := isLastInTreeLevel(i, numberOfNodes)
 		lineSymbol := getLineSymbol(isLastInTreeLevel, isRootNode)
 
-		result += fmt.Sprintf("%s%s%f (%s)\n", previousIndentation, lineSymbol, node.Value, node.Description)
+		result += fmt.Sprintf(ExplainNoteFormat, previousIndentation, lineSymbol, node.Value, node.Description)
 
 		if len(node.Details) > 0 {
 			newIndentation := createNewIndentation(previousIndentation, isRootNode, isLastInTreeLevel)

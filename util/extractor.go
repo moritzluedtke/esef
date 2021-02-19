@@ -1,8 +1,11 @@
-package main
+package util
 
 import (
 	"encoding/json"
+	"errors"
 )
+
+const ErrorMessage = "error during JSON Data extraction\n\nplease check your input string for any json errors"
 
 type ExplainAPIDocument struct {
 	Index       string      `json:"_index"`
@@ -18,18 +21,18 @@ type ExplainNode struct {
 	Details     []ExplainNode `json:"details"`
 }
 
-func ExtractDataFromExplainAPI(explainAPIOutput string) ExplainAPIDocument {
+func ExtractDataFromExplainAPI(explainAPIOutput string) (ExplainAPIDocument, error) {
 	return extractDocumentFromJson(explainAPIOutput)
 }
 
-func extractDocumentFromJson(inputJson string) ExplainAPIDocument {
+func extractDocumentFromJson(inputJson string) (ExplainAPIDocument, error) {
 	var explainAPIDocument ExplainAPIDocument
 	byteData := []byte(inputJson)
 	err := json.Unmarshal(byteData, &explainAPIDocument)
 
 	if err != nil {
-		return ExplainAPIDocument{}
+		return ExplainAPIDocument{}, errors.New(ErrorMessage)
 	}
 
-	return explainAPIDocument
+	return explainAPIDocument, nil
 }

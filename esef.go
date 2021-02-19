@@ -1,15 +1,15 @@
 package main
 
 import (
-	"fmt"
-
 	"fyne.io/fyne/v2"
 	"fyne.io/fyne/v2/app"
 	"fyne.io/fyne/v2/container"
 	"fyne.io/fyne/v2/widget"
+
+	"./util"
 )
 
-const APP_TITLE = "ESEF v0.1-alpha"
+const AppTitle = "ESEF v0.2"
 const CopiedOutputToClipboardMessageText = "Copied output to clipboard!"
 const InputLabelText = "Input"
 const OutputLabelText = "Output"
@@ -31,7 +31,7 @@ func main() {
 
 func buildMainWindow() fyne.Window {
 	application := app.New()
-	Window = application.NewWindow(APP_TITLE)
+	Window = application.NewWindow(AppTitle)
 
 	Window.SetContent(container.NewBorder(
 		nil,
@@ -47,15 +47,17 @@ func buildMainWindow() fyne.Window {
 	return Window
 }
 
-func buildFormatArea() *fyne.Container {
-	return container.NewAdaptiveGrid(
-		2,
-		widget.NewButton(SimpleFormatButtonText, func() {
-			handleSimpleFormatButtonClick()
-		}),
-		widget.NewButton(TreeFormatButtonText, func() {
-			handleTreeFormatButtonClick()
-		}),
+func buildFormatArea() *widget.Card {
+	return widget.NewCard("Format", "",
+		container.NewAdaptiveGrid(
+			2,
+			widget.NewButton(SimpleFormatButtonText, func() {
+				handleSimpleFormatButtonClick()
+			}),
+			widget.NewButton(TreeFormatButtonText, func() {
+				handleTreeFormatButtonClick()
+			}),
+		),
 	)
 }
 
@@ -75,35 +77,36 @@ func handleTreeFormatButtonClick() {
 	OutputEntry.SetText(formatInput(true))
 }
 
-func buildOutputArea() *fyne.Container {
+func buildOutputArea() *widget.Card {
 	OutputEntry = widget.NewMultiLineEntry()
 
 	OutputLabel = widget.NewLabel(OutputLabelText)
 	OutputLabel.Alignment = fyne.TextAlignCenter
 
-	return container.NewBorder(
-		OutputLabel,
-		widget.NewButton(CopyButtonText, func() {
-			handleCopyOutputButtonClick()
-		}),
-		nil,
-		nil,
-		OutputEntry,
+	return widget.NewCard(
+		OutputLabelText,
+		"",
+		container.NewBorder(
+			nil,
+			widget.NewButton(CopyButtonText, func() {
+				handleCopyOutputButtonClick()
+			}),
+			nil,
+			nil,
+			OutputEntry,
+		),
 	)
 }
 
-func buildInputArea() *fyne.Container {
+func buildInputArea() *widget.Card {
 	InputEntry = widget.NewMultiLineEntry()
-	InputEntry.Text = GetExplainApiOutputExample()
 
 	InputLabel = widget.NewLabel(InputLabelText)
 	InputLabel.Alignment = fyne.TextAlignCenter
 
-	return container.NewBorder(
-		InputLabel,
-		nil,
-		nil,
-		nil,
+	return widget.NewCard(
+		InputLabelText,
+		"",
 		InputEntry,
 	)
 }
@@ -114,19 +117,22 @@ func handleCopyOutputButtonClick() {
 }
 
 func formatInput(useTreeFormat bool) string {
-	explainApiDocument := ExtractDataFromExplainAPI(InputEntry.Text)
 	var formattedString string
+	explainApiDocument, err := util.ExtractDataFromExplainAPI(InputEntry.Text)
 
-	if useTreeFormat {
-		formattedString = FormatExplainApiDocument(explainApiDocument, useTreeFormat)
-	} else {
-		formattedString = FormatExplainApiDocument(explainApiDocument, useTreeFormat)
+	if err != nil {
+		return err.Error()
 	}
 
-	fmt.Println(formattedString)
+	if useTreeFormat {
+		formattedString = util.FormatExplainApiDocument(explainApiDocument, useTreeFormat)
+	} else {
+		formattedString = util.FormatExplainApiDocument(explainApiDocument, useTreeFormat)
+	}
+
 	return formattedString
 }
 
 func sendOSNotification(message string) {
-	fyne.CurrentApp().SendNotification(fyne.NewNotification(APP_TITLE, message))
+	fyne.CurrentApp().SendNotification(fyne.NewNotification(AppTitle, message))
 }

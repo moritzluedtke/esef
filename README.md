@@ -1,4 +1,5 @@
-# ESEF (ElasticSearch Explain Formatter)
+# ESEF
+*ElasticSearch Explain (API) Formatter*
 
 ## Build project locally
 ```shell script
@@ -8,3 +9,6 @@
 
 fyne package -os darwin # optional: -icon icon.png
 ```
+
+## Credits
+The app icon is from the [Material Icon Set](https://material.io/resources/icons/?search=tree&icon=account_tree&style=baseline).
