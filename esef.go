@@ -9,10 +9,21 @@ import (
 	"fyne.io/fyne/v2/widget"
 )
 
+const APP_TITLE = "ESEF v0.1-alpha"
+const CopiedOutputToClipboardMessageText = "Copied output to clipboard!"
+const InputLabelText = "Input"
+const OutputLabelText = "Output"
+const SimpleFormatButtonText = "Simple Format"
+const TreeFormatButtonText = "Tree Format"
+const CopyButtonText = "Copy"
+
 var WindowSize = fyne.NewSize(900, 600)
 var Window fyne.Window
 
-const APP_TITLE = "ESEF v0.1-alpha"
+var InputEntry *widget.Entry
+var InputLabel *widget.Label
+var OutputEntry *widget.Entry
+var OutputLabel *widget.Label
 
 func main() {
 	buildMainWindow().ShowAndRun()
@@ -22,38 +33,13 @@ func buildMainWindow() fyne.Window {
 	application := app.New()
 	Window = application.NewWindow(APP_TITLE)
 
-	// Refactor this stuff into their methods and start global references for use in other funcs
-	inputEntry := widget.NewMultiLineEntry()
-	inputEntry.Text = GetExplainApiOutputExample()
-
-	outputEntry := widget.NewMultiLineEntry()
-
-	inputLabel := widget.NewLabel("Input")
-	inputLabel.Alignment = fyne.TextAlignCenter
-
-	outputLabel := widget.NewLabel("Output")
-	outputLabel.Alignment = fyne.TextAlignCenter
-
 	Window.SetContent(container.NewBorder(
 		nil,
-		container.NewAdaptiveGrid(
-			2,
-			widget.NewButton("Simple Format", func() {
-				handleSimpleFormatButtonClick(inputEntry, outputEntry)
-			}),
-			widget.NewButton("Tree Format", func() {
-				handleTreeFormatButtonClick(inputEntry, outputEntry)
-			}),
-		),
+		buildFormatArea(),
 		nil,
 		nil,
-		container.NewAdaptiveGrid(
-			2,
-			buildInputArea(inputLabel, inputEntry),
-			buildOutputArea(outputLabel, outputEntry),
-		),
-	),
-	)
+		buildInputOutputArea(),
+	))
 
 	Window.Resize(WindowSize)
 	Window.CenterOnScreen()
@@ -61,53 +47,84 @@ func buildMainWindow() fyne.Window {
 	return Window
 }
 
-func handleSimpleFormatButtonClick(inputEntry *widget.Entry, outputEntry *widget.Entry) {
-	outputEntry.SetText(formatInput(inputEntry.Text, false))
+func buildFormatArea() *fyne.Container {
+	return container.NewAdaptiveGrid(
+		2,
+		widget.NewButton(SimpleFormatButtonText, func() {
+			handleSimpleFormatButtonClick()
+		}),
+		widget.NewButton(TreeFormatButtonText, func() {
+			handleTreeFormatButtonClick()
+		}),
+	)
 }
 
-func buildOutputArea(outputLabel *widget.Label, outputEntry *widget.Entry) *fyne.Container {
+func buildInputOutputArea() *fyne.Container {
+	return container.NewAdaptiveGrid(
+		2,
+		buildInputArea(),
+		buildOutputArea(),
+	)
+}
+
+func handleSimpleFormatButtonClick() {
+	OutputEntry.SetText(formatInput(false))
+}
+
+func handleTreeFormatButtonClick() {
+	OutputEntry.SetText(formatInput(true))
+}
+
+func buildOutputArea() *fyne.Container {
+	OutputEntry = widget.NewMultiLineEntry()
+
+	OutputLabel = widget.NewLabel(OutputLabelText)
+	OutputLabel.Alignment = fyne.TextAlignCenter
+
 	return container.NewBorder(
-		outputLabel,
-		widget.NewButton("Copy", func() {
-			handleCopyOutputButtonClick(outputEntry.Text)
+		OutputLabel,
+		widget.NewButton(CopyButtonText, func() {
+			handleCopyOutputButtonClick()
 		}),
 		nil,
 		nil,
-		outputEntry,
+		OutputEntry,
 	)
 }
 
-func buildInputArea(inputLabel *widget.Label, inputEntry *widget.Entry) *fyne.Container {
+func buildInputArea() *fyne.Container {
+	InputEntry = widget.NewMultiLineEntry()
+	InputEntry.Text = GetExplainApiOutputExample()
+
+	InputLabel = widget.NewLabel(InputLabelText)
+	InputLabel.Alignment = fyne.TextAlignCenter
+
 	return container.NewBorder(
-		inputLabel,
+		InputLabel,
 		nil,
 		nil,
 		nil,
-		inputEntry,
+		InputEntry,
 	)
 }
 
-func handleTreeFormatButtonClick(inputEntry *widget.Entry, outputEntry *widget.Entry) {
-	outputEntry.SetText(formatInput(inputEntry.Text, true))
+func handleCopyOutputButtonClick() {
+	Window.Clipboard().SetContent(OutputEntry.Text)
+	sendOSNotification(CopiedOutputToClipboardMessageText)
 }
 
-func handleCopyOutputButtonClick(output string) {
-	Window.Clipboard().SetContent(output)
-	sendOSNotification("Copied output to clipboard!")
-}
+func formatInput(useTreeFormat bool) string {
+	explainApiDocument := ExtractDataFromExplainAPI(InputEntry.Text)
+	var formattedString string
 
-func formatInput(input string, useTreeFormat bool) string {
-	explainApiDocument := ExtractDataFromExplainAPI(input)
 	if useTreeFormat {
-		document := FormatExplainApiDocument(explainApiDocument, useTreeFormat)
-		fmt.Println(document)
-		return document
+		formattedString = FormatExplainApiDocument(explainApiDocument, useTreeFormat)
 	} else {
-		document := FormatExplainApiDocument(explainApiDocument, useTreeFormat)
-		fmt.Println(document)
-		return document
+		formattedString = FormatExplainApiDocument(explainApiDocument, useTreeFormat)
 	}
 
+	fmt.Println(formattedString)
+	return formattedString
 }
 
 func sendOSNotification(message string) {
