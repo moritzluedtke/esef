@@ -11,12 +11,15 @@ const ISpape = "│  "
 const TShape = "├─ "
 const LShape = "└─ "
 
+const EmptyStartString = ""
+
 const DocumentInfoHeaderFormat = "index: %s\ndocumentId: %s\nmatched: %t\nexplanation:\n%s"
 
 func FormatExplainApiDocument(doc ExplainAPIDocument, useTreeFormat bool) string {
 	var formattedExplanation string
+
 	if useTreeFormat {
-		formattedExplanation = formatExplainNodesToTreeFormat("", true, doc.Explanation)
+		formattedExplanation = formatExplainNodesToTreeFormat(EmptyStartString, true, doc.Explanation)
 	} else {
 		formattedExplanation = formatExplainNodesToSimpleFormat(0, doc.Explanation)
 	}
@@ -45,7 +48,7 @@ func formatExplainNodesToTreeFormat(previousIndentation string, isRootNode bool,
 	numberOfNodes := len(nodes)
 
 	for i, node := range nodes {
-		isLastInTreeLevel := isLast(i, numberOfNodes)
+		isLastInTreeLevel := isLastInTreeLevel(i, numberOfNodes)
 		lineSymbol := getLineSymbol(isLastInTreeLevel, isRootNode)
 
 		result += fmt.Sprintf("%s%s%f (%s)\n", previousIndentation, lineSymbol, node.Value, node.Description)
@@ -70,7 +73,7 @@ func createNewIndentation(previousIndentation string, isFirst bool, isLastInTree
 	}
 }
 
-func isLast(i int, numberOfChildren int) bool {
+func isLastInTreeLevel(i int, numberOfChildren int) bool {
 	if i == (numberOfChildren - 1) {
 		return true
 	} else {
