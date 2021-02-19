@@ -63,6 +63,14 @@ func formatExplainNodesToTreeFormat(previousIndentation string, isRootNode bool,
 	return result
 }
 
+func isLastInTreeLevel(i int, numberOfChildren int) bool {
+	if i == (numberOfChildren - 1) {
+		return true
+	} else {
+		return false
+	}
+}
+
 func createNewIndentation(previousIndentation string, isFirst bool, isLastInTreeLevel bool) string {
 	if isFirst {
 		return DefaultExplanationIndentation
@@ -70,14 +78,6 @@ func createNewIndentation(previousIndentation string, isFirst bool, isLastInTree
 		return previousIndentation + EmptySpace
 	} else {
 		return previousIndentation + ISpape
-	}
-}
-
-func isLastInTreeLevel(i int, numberOfChildren int) bool {
-	if i == (numberOfChildren - 1) {
-		return true
-	} else {
-		return false
 	}
 }
 
