@@ -16,8 +16,9 @@ const InputLabelText = "Input"
 const OutputLabelText = "Output"
 const SimpleFormatButtonText = "Simple Format"
 const TreeFormatButtonText = "Tree Format"
-const CopyButtonText = "Copy"
+const CopyButtonText = "Copy to Clipboard"
 const ClearButtonText = "Clear"
+const PasteFromClipboardButtonText = "Paste from Clipboard"
 
 var WindowSize = fyne.NewSize(900, 600)
 var Window fyne.Window
@@ -92,9 +93,15 @@ func buildInputArea() *widget.Card {
 		"",
 		container.NewBorder(
 			nil,
-			widget.NewButton(ClearButtonText, func() {
-				handleClearInputButtonClick()
-			}),
+			container.NewAdaptiveGrid(
+				2,
+				widget.NewButton(PasteFromClipboardButtonText, func() {
+					handlePasteFromClipboardButtonClick()
+				}),
+				widget.NewButton(ClearButtonText, func() {
+					handleClearInputButtonClick()
+				}),
+			),
 			nil,
 			nil,
 			InputEntry,
@@ -125,6 +132,10 @@ func buildOutputArea() *widget.Card {
 			OutputEntry,
 		),
 	)
+}
+
+func handlePasteFromClipboardButtonClick() {
+	InputEntry.SetText(Window.Clipboard().Content())
 }
 
 func handleClearInputButtonClick() {
