@@ -18,10 +18,8 @@ type ExplainNode struct {
 	Details     []ExplainNode `json:"details"`
 }
 
-func ExtractDataFromExplainAPI(explainAPIOutput string) string {
-	doc := extractDocumentFromJson(explainAPIOutput)
-
-	return FormatExplainApiDocument(doc)
+func ExtractDataFromExplainAPI(explainAPIOutput string) ExplainAPIDocument {
+	return extractDocumentFromJson(explainAPIOutput)
 }
 
 func extractDocumentFromJson(inputJson string) ExplainAPIDocument {

@@ -1,6 +1,8 @@
 package main
 
 import (
+	"fmt"
+
 	"fyne.io/fyne/v2"
 	"fyne.io/fyne/v2/app"
 	"fyne.io/fyne/v2/container"
@@ -10,14 +12,17 @@ import (
 var WindowSize = fyne.NewSize(900, 600)
 var Window fyne.Window
 
+const APP_TITLE = "ESEF v0.1-alpha"
+
 func main() {
 	buildMainWindow().ShowAndRun()
 }
 
 func buildMainWindow() fyne.Window {
 	application := app.New()
-	Window = application.NewWindow("ESEF v0.1 alpha - by Moritz Lüdtke")
+	Window = application.NewWindow(APP_TITLE)
 
+	// Refactor this stuff into their methods and start global references for use in other funcs
 	inputEntry := widget.NewMultiLineEntry()
 	inputEntry.Text = GetExplainApiOutputExample()
 
@@ -31,9 +36,15 @@ func buildMainWindow() fyne.Window {
 
 	Window.SetContent(container.NewBorder(
 		nil,
-		widget.NewButton("Format", func() {
-			handleFormatButtonClick(inputEntry, outputEntry)
-		}),
+		container.NewAdaptiveGrid(
+			2,
+			widget.NewButton("Simple Format", func() {
+				handleSimpleFormatButtonClick(inputEntry, outputEntry)
+			}),
+			widget.NewButton("Tree Format", func() {
+				handleTreeFormatButtonClick(inputEntry, outputEntry)
+			}),
+		),
 		nil,
 		nil,
 		container.NewAdaptiveGrid(
@@ -48,6 +59,10 @@ func buildMainWindow() fyne.Window {
 	Window.CenterOnScreen()
 
 	return Window
+}
+
+func handleSimpleFormatButtonClick(inputEntry *widget.Entry, outputEntry *widget.Entry) {
+	outputEntry.SetText(formatInput(inputEntry.Text, false))
 }
 
 func buildOutputArea(outputLabel *widget.Label, outputEntry *widget.Entry) *fyne.Container {
@@ -72,16 +87,29 @@ func buildInputArea(inputLabel *widget.Label, inputEntry *widget.Entry) *fyne.Co
 	)
 }
 
-func handleFormatButtonClick(inputEntry *widget.Entry, outputEntry *widget.Entry) {
-	outputEntry.SetText(formatInputString(inputEntry.Text))
+func handleTreeFormatButtonClick(inputEntry *widget.Entry, outputEntry *widget.Entry) {
+	outputEntry.SetText(formatInput(inputEntry.Text, true))
 }
 
 func handleCopyOutputButtonClick(output string) {
 	Window.Clipboard().SetContent(output)
-
-	fyne.CurrentApp().SendNotification(fyne.NewNotification("ESEF", "Copied output to clipboard!"))
+	sendOSNotification("Copied output to clipboard!")
 }
 
-func formatInputString(input string) string {
-	return ExtractDataFromExplainAPI(input)
+func formatInput(input string, useTreeFormat bool) string {
+	explainApiDocument := ExtractDataFromExplainAPI(input)
+	if useTreeFormat {
+		document := FormatExplainApiDocument(explainApiDocument, useTreeFormat)
+		fmt.Println(document)
+		return document
+	} else {
+		document := FormatExplainApiDocument(explainApiDocument, useTreeFormat)
+		fmt.Println(document)
+		return document
+	}
+
+}
+
+func sendOSNotification(message string) {
+	fyne.CurrentApp().SendNotification(fyne.NewNotification(APP_TITLE, message))
 }
