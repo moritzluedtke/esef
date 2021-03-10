@@ -67,7 +67,8 @@ go run .
 rm -r ESEF.app
 rm ESEF
 
-cd /dist
+go build ESEF
+cd dist/
 fyne package -os darwin -appVersion "0.4.0" -icon ../icon.png -sourceDir ../
 ```
 
