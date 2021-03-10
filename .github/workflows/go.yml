@@ -21,7 +21,8 @@ jobs:
     - name: Build
       run: go build .
 
-    - name: Package    
-      run: |-
-        go get fyne.io/fyne/v2/cmd/fyne
-        fyne package -os darwin -appVersion "0.3.0" -icon icon.png
+#    - name: Package
+#      run: |-
+#        go get fyne.io/fyne/v2/cmd/fyne
+#        cd ./dist
+#        fyne package -os darwin -appVersion "0.4.0" -icon icon.png

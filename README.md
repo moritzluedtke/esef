@@ -1,7 +1,7 @@
 # ESEF
 *ElasticSearch Explain (API) Formatter*
 
-![alt text](./images/ESEF_Screenshot.png "ESEF Screenshot")
+![alt text](assets/image/ESEF_Screenshot.png "ESEF Screenshot")
 
 ESEF converts the output of ES explain API to a more readable format.
 
@@ -32,7 +32,7 @@ Two types of formats are supported:
   ```
 - **Tree**
   
-  Adds a nice tree layout to the format above. (*Currently only visible in other editors after copying the output*)
+  Adds a nice tree layout to the format above.
 
   Example:
   ```
@@ -56,13 +56,19 @@ Two types of formats are supported:
 
 ## Development
 
-### Build project locally
+## Run locally
+```shell
+go run .
+```
+
+### Package locally
 ```shell script
 # Build for Mac
 rm -r ESEF.app
 rm ESEF
 
-fyne package -os darwin -appVersion "0.3.0" -icon icon.png
+cd /dist
+fyne package -os darwin -appVersion "0.4.0" -icon ../icon.png -sourceDir ../
 ```
 
 ### Good to know

@@ -6,21 +6,27 @@ import (
 	"fyne.io/fyne/v2/container"
 	"fyne.io/fyne/v2/widget"
 
-	"moritzluedtke/ESEF/util"
+	"ESEF/util"
 )
 
-const AppTitle = "ESEF v0.3"
+const AppTitle = "ESEF"
 const CopiedOutputToClipboardMessageText = "Copied output to clipboard!"
 const InputEntryPlaceholder = "Enter a valid explain API response (json)"
 const InputLabelText = "Input"
 const OutputLabelText = "Output"
-const SimpleFormatButtonText = "Simple Format"
-const TreeFormatButtonText = "Tree Format"
-const CopyButtonText = "Copy to Clipboard"
-const ClearButtonText = "Clear"
-const PasteFromClipboardButtonText = "Paste from Clipboard"
+const SimpleFormatButtonLabel = "Simple Format"
+const TreeFormatButtonLabel = "Tree Format"
+const CopyButtonLabel = "Copy to Clipboard"
+const ClearButtonLabel = "Clear"
+const PasteFromClipboardButtonLabel = "Paste from Clipboard"
+const ShowCompactFunctionLabel = "Show compact TF & IDF functions"
+const ShowVariableNamesInFunctionLabel = "Show variable names in functions"
 
-var WindowSize = fyne.NewSize(900, 600)
+const SplitContainerOffset = 0.35
+
+var formatOptions = new(util.FormatOptions)
+
+var WindowSize = fyne.NewSize(1400, 800)
 var Window fyne.Window
 
 var InputEntry *widget.Entry
@@ -53,37 +59,53 @@ func buildMainWindow() fyne.Window {
 
 func buildFormatArea() *widget.Card {
 	return widget.NewCard("Format", "",
-		container.NewAdaptiveGrid(
-			2,
-			widget.NewButton(SimpleFormatButtonText, func() {
-				handleSimpleFormatButtonClick()
-			}),
-			widget.NewButton(TreeFormatButtonText, func() {
-				handleTreeFormatButtonClick()
-			}),
+		container.NewVBox(
+			buildFormatOptions(),
+			container.NewAdaptiveGrid(
+				2,
+				widget.NewButton(SimpleFormatButtonLabel, func() {
+					handleSimpleFormatButtonClick()
+				}),
+				widget.NewButton(TreeFormatButtonLabel, func() {
+					handleTreeFormatButtonClick()
+				}),
+			),
 		),
 	)
 }
 
-func buildInputOutputArea() *fyne.Container {
-	return container.NewAdaptiveGrid(
-		2,
-		buildInputArea(),
-		buildOutputArea(),
+func buildFormatOptions() fyne.CanvasObject {
+	ShowVariableNamesCheck := widget.NewCheck(ShowVariableNamesInFunctionLabel, func(newValue bool) {
+		formatOptions.SetShowVariableNamesInFunction(newValue)
+	})
+	ShowVariableNamesCheck.Disable()
+	ShowVariableNamesCheck.DisableableWidget = widget.DisableableWidget{}
+
+	ShowCompactFunctionCheck := widget.NewCheck(ShowCompactFunctionLabel, func(newValue bool) {
+		handleShowCompactFunctionClick(newValue, ShowVariableNamesCheck)
+	})
+
+	return container.NewVBox(
+		ShowCompactFunctionCheck,
+		ShowVariableNamesCheck,
 	)
 }
 
-func handleSimpleFormatButtonClick() {
-	OutputEntry.SetText(formatInput(false))
-}
+func buildInputOutputArea() *container.Split {
+	splitContainer := container.NewHSplit(
+		buildInputArea(),
+		buildOutputArea(),
+	)
 
-func handleTreeFormatButtonClick() {
-	OutputEntry.SetText(formatInput(true))
+	splitContainer.SetOffset(SplitContainerOffset)
+
+	return splitContainer
 }
 
 func buildInputArea() *widget.Card {
 	InputEntry = widget.NewMultiLineEntry()
 	InputEntry.SetPlaceHolder(InputEntryPlaceholder)
+	InputEntry.TextStyle = fyne.TextStyle{Monospace: true}
 
 	InputLabel = widget.NewLabel(InputLabelText)
 	InputLabel.Alignment = fyne.TextAlignCenter
@@ -95,10 +117,10 @@ func buildInputArea() *widget.Card {
 			nil,
 			container.NewAdaptiveGrid(
 				2,
-				widget.NewButton(PasteFromClipboardButtonText, func() {
+				widget.NewButton(PasteFromClipboardButtonLabel, func() {
 					handlePasteFromClipboardButtonClick()
 				}),
-				widget.NewButton(ClearButtonText, func() {
+				widget.NewButton(ClearButtonLabel, func() {
 					handleClearInputButtonClick()
 				}),
 			),
@@ -112,11 +134,12 @@ func buildInputArea() *widget.Card {
 func buildOutputArea() *widget.Card {
 	OutputEntry = widget.NewMultiLineEntry()
 	OutputEntry.OnChanged = handleOnChangeOfOutputEntry
+	OutputEntry.TextStyle = fyne.TextStyle{Monospace: true}
 
 	OutputLabel = widget.NewLabel(OutputLabelText)
 	OutputLabel.Alignment = fyne.TextAlignCenter
 
-	CopyButton = widget.NewButton(CopyButtonText, func() {
+	CopyButton = widget.NewButton(CopyButtonLabel, func() {
 		handleCopyOutputButtonClick()
 	})
 	CopyButton.Disable()
@@ -132,6 +155,16 @@ func buildOutputArea() *widget.Card {
 			OutputEntry,
 		),
 	)
+}
+
+func handleSimpleFormatButtonClick() {
+	formatOptions.SetUseTreeFormat(false)
+	OutputEntry.SetText(formatInput())
+}
+
+func handleTreeFormatButtonClick() {
+	formatOptions.SetUseTreeFormat(true)
+	OutputEntry.SetText(formatInput())
 }
 
 func handlePasteFromClipboardButtonClick() {
@@ -151,6 +184,20 @@ func handleOnChangeOfOutputEntry(newText string) {
 	changeDisabledStateOfCopyButton(newText)
 }
 
+func handleShowCompactFunctionClick(newValue bool, showVariableNamesCheck *widget.Check) {
+	formatOptions.SetShowCompactFunction(newValue)
+
+	changeDisableStateOfShowVariableNamesCheck(newValue, showVariableNamesCheck)
+}
+
+func changeDisableStateOfShowVariableNamesCheck(newValue bool, ShowVariableNamesCheck *widget.Check) {
+	if newValue {
+		ShowVariableNamesCheck.Enable()
+	} else {
+		ShowVariableNamesCheck.Disable()
+	}
+}
+
 func changeDisabledStateOfCopyButton(newText string) {
 	if newText == "" {
 		CopyButton.Disable()
@@ -159,7 +206,7 @@ func changeDisabledStateOfCopyButton(newText string) {
 	}
 }
 
-func formatInput(useTreeFormat bool) string {
+func formatInput() string {
 	var formattedString string
 	explainApiDocument, err := util.ExtractDataFromExplainAPI(InputEntry.Text)
 
@@ -167,10 +214,10 @@ func formatInput(useTreeFormat bool) string {
 		return err.Error()
 	}
 
-	if useTreeFormat {
-		formattedString = util.FormatExplainApiDocument(explainApiDocument, useTreeFormat)
+	if formatOptions.UseTreeFormat {
+		formattedString = util.FormatExplainApiDocument(explainApiDocument, formatOptions)
 	} else {
-		formattedString = util.FormatExplainApiDocument(explainApiDocument, useTreeFormat)
+		formattedString = util.FormatExplainApiDocument(explainApiDocument, formatOptions)
 	}
 
 	return formattedString

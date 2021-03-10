@@ -5,20 +5,20 @@ import (
 	"errors"
 )
 
-const ErrorMessage = "error during JSON Data extraction\n\nplease check your input string for any json errors"
+const ErrorMessage = "Error during JSON Data extraction.\n\nPlease check your input string for any json errors."
 
 type ExplainAPIDocument struct {
-	Index       string      `json:"_index"`
-	Type        string      `json:"_type"`
-	DocumentId  string      `json:"_id"`
-	Matched     bool        `json:"matched"`
-	Explanation ExplainNode `json:"explanation"`
+	Index       string          `json:"_index"`
+	Type        string          `json:"_type"`
+	DocumentId  string          `json:"_id"`
+	Matched     bool            `json:"matched"`
+	Explanation ExplanationNode `json:"explanation"`
 }
 
-type ExplainNode struct {
-	Value       float64       `json:"value"`
-	Description string        `json:"description"`
-	Details     []ExplainNode `json:"details"`
+type ExplanationNode struct {
+	Value       float64           `json:"value"`
+	Description string            `json:"description"`
+	Details     []ExplanationNode `json:"details"`
 }
 
 func ExtractDataFromExplainAPI(explainAPIOutput string) (ExplainAPIDocument, error) {

@@ -1,0 +1,70 @@
+{
+  "_index" : "some-index",
+  "_type" : "_doc",
+  "_id" : "yT6LHHgBF5X0GW9IIJkj",
+  "matched" : true,
+  "explanation" : {
+    "value" : 0.2876821,
+    "description" : "weight(name:pants in 0) [PerFieldSimilarity], result of:",
+    "details" : [
+      {
+        "value" : 0.2876821,
+        "description" : "score(freq=1.0), computed as boost * idf * tf from:",
+        "details" : [
+          {
+            "value" : 2.2,
+            "description" : "boost",
+            "details" : [ ]
+          },
+          {
+            "value" : 0.2876821,
+            "description" : "idf, computed as log(1 + (N - n + 0.5) / (n + 0.5)) from:",
+            "details" : [
+              {
+                "value" : 1,
+                "description" : "n, number of documents containing term",
+                "details" : [ ]
+              },
+              {
+                "value" : 1,
+                "description" : "N, total number of documents with field",
+                "details" : [ ]
+              }
+            ]
+          },
+          {
+            "value" : 0.45454544,
+            "description" : "tf, computed as freq / (freq + k1 * (1 - b + b * dl / avgdl)) from:",
+            "details" : [
+              {
+                "value" : 1.0,
+                "description" : "freq, occurrences of term within document",
+                "details" : [ ]
+              },
+              {
+                "value" : 1.2,
+                "description" : "k1, term saturation parameter",
+                "details" : [ ]
+              },
+              {
+                "value" : 0.75,
+                "description" : "b, length normalization parameter",
+                "details" : [ ]
+              },
+              {
+                "value" : 1.0,
+                "description" : "dl, length of field",
+                "details" : [ ]
+              },
+              {
+                "value" : 1.0,
+                "description" : "avgdl, average length of field",
+                "details" : [ ]
+              }
+            ]
+          }
+        ]
+      }
+    ]
+  }
+}

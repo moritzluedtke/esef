@@ -1,5 +1,7 @@
-module moritzluedtke/ESEF
+module ESEF
 
-go 1.15
+go 1.16
 
-require fyne.io/fyne/v2 v2.0.0
+require (
+	fyne.io/fyne/v2 v2.0.0
+)
