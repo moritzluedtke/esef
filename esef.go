@@ -19,8 +19,8 @@ const TreeFormatButtonLabel = "Tree Format"
 const CopyButtonLabel = "Copy to Clipboard"
 const ClearButtonLabel = "Clear"
 const PasteFromClipboardButtonLabel = "Paste from Clipboard"
-const ShowCompactFunctionLabel = "Show compact TF & IDF functions"
-const ShowVariableNamesInFunctionLabel = "Show variable names in functions"
+const ShowCompactFormularsLabel = "Show compact TF & IDF formulars"
+const ShowVariableNamesInFormularsLabel = "Show variable names in formulars"
 
 const SplitContainerOffset = 0.35
 
@@ -75,14 +75,14 @@ func buildFormatArea() *widget.Card {
 }
 
 func buildFormatOptions() fyne.CanvasObject {
-	ShowVariableNamesCheck := widget.NewCheck(ShowVariableNamesInFunctionLabel, func(newValue bool) {
+	ShowVariableNamesCheck := widget.NewCheck(ShowVariableNamesInFormularsLabel, func(newValue bool) {
 		formatOptions.SetShowVariableNamesInFunction(newValue)
 	})
 	ShowVariableNamesCheck.Disable()
 	ShowVariableNamesCheck.DisableableWidget = widget.DisableableWidget{}
 
-	ShowCompactFunctionCheck := widget.NewCheck(ShowCompactFunctionLabel, func(newValue bool) {
-		handleShowCompactFunctionClick(newValue, ShowVariableNamesCheck)
+	ShowCompactFunctionCheck := widget.NewCheck(ShowCompactFormularsLabel, func(newValue bool) {
+		handleShowCompactFormularsClick(newValue, ShowVariableNamesCheck)
 	})
 
 	return container.NewVBox(
@@ -184,7 +184,7 @@ func handleOnChangeOfOutputEntry(newText string) {
 	changeDisabledStateOfCopyButton(newText)
 }
 
-func handleShowCompactFunctionClick(newValue bool, showVariableNamesCheck *widget.Check) {
+func handleShowCompactFormularsClick(newValue bool, showVariableNamesCheck *widget.Check) {
 	formatOptions.SetShowCompactFunction(newValue)
 
 	changeDisableStateOfShowVariableNamesCheck(newValue, showVariableNamesCheck)

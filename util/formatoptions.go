@@ -2,7 +2,7 @@ package util
 
 type FormatOptions struct {
 	ShowCompactFunction         bool
-	ShowVariableNamesInFunction bool
+	ShowVariableNamesInFormular bool
 	UseTreeFormat               bool
 }
 
@@ -11,7 +11,7 @@ func (fo *FormatOptions) SetShowCompactFunction(newValue bool) {
 }
 
 func (fo *FormatOptions) SetShowVariableNamesInFunction(newValue bool) {
-	fo.ShowVariableNamesInFunction = newValue
+	fo.ShowVariableNamesInFormular = newValue
 }
 
 func (fo *FormatOptions) SetUseTreeFormat(newValue bool) {
