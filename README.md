@@ -61,6 +61,11 @@ Two types of formats are supported:
 go run .
 ```
 
+### Update Packages
+```shell
+go get -u
+```
+
 ### Package locally
 ```shell script
 # Build for Mac

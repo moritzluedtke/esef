@@ -19,12 +19,13 @@ const TreeFormatButtonLabel = "Tree Format"
 const CopyButtonLabel = "Copy to Clipboard"
 const ClearButtonLabel = "Clear"
 const PasteFromClipboardButtonLabel = "Paste from Clipboard"
-const ShowCompactFormularsLabel = "Show compact TF & IDF formulars"
+const ShowCompactFormularsLabel = "Show compact TF/IDF formulars"
 const ShowVariableNamesInFormularsLabel = "Show variable names in formulars"
+const HideDetailedFormularsCheckLabel = "Hide detailed TF/IDF formulars"
 
 const SplitContainerOffset = 0.35
 
-var formatOptions = new(util.FormatOptions)
+var FormatOptions = new(util.FormatOptions)
 
 var WindowSize = fyne.NewSize(1400, 800)
 var Window fyne.Window
@@ -34,6 +35,9 @@ var InputLabel *widget.Label
 var OutputEntry *widget.Entry
 var OutputLabel *widget.Label
 var CopyButton *widget.Button
+var HideFormularsCheck *widget.Check
+var ShowCompactFormularsCheck *widget.Check
+var ShowVariableNamesCheck *widget.Check
 
 func main() {
 	buildMainWindow().ShowAndRun()
@@ -75,18 +79,28 @@ func buildFormatArea() *widget.Card {
 }
 
 func buildFormatOptions() fyne.CanvasObject {
-	ShowVariableNamesCheck := widget.NewCheck(ShowVariableNamesInFormularsLabel, func(newValue bool) {
-		formatOptions.SetShowVariableNamesInFunction(newValue)
+	ShowVariableNamesCheck = widget.NewCheck(ShowVariableNamesInFormularsLabel, func(newValue bool) {
+		FormatOptions.SetShowVariableNamesInFormular(newValue)
 	})
+	ShowVariableNamesCheck.DisableableWidget = widget.DisableableWidget{} // !this NEEDs to be first, then .Disable()!
 	ShowVariableNamesCheck.Disable()
-	ShowVariableNamesCheck.DisableableWidget = widget.DisableableWidget{}
 
-	ShowCompactFunctionCheck := widget.NewCheck(ShowCompactFormularsLabel, func(newValue bool) {
-		handleShowCompactFormularsClick(newValue, ShowVariableNamesCheck)
+	ShowCompactFormularsCheck = widget.NewCheck(ShowCompactFormularsLabel, func(newValue bool) {
+		handleShowCompactFormularClick(newValue)
 	})
+	ShowCompactFormularsCheck.DisableableWidget = widget.DisableableWidget{}
+	ShowCompactFormularsCheck.Disable()
+
+	HideFormularsCheck = widget.NewCheck(HideDetailedFormularsCheckLabel, func(newValue bool) {
+		handleHideFormularClick(newValue)
+	})
+	HideFormularsCheck.Checked = true
+
+	FormatOptions.SetHideFormular(true)
 
 	return container.NewVBox(
-		ShowCompactFunctionCheck,
+		HideFormularsCheck,
+		ShowCompactFormularsCheck,
 		ShowVariableNamesCheck,
 	)
 }
@@ -158,12 +172,12 @@ func buildOutputArea() *widget.Card {
 }
 
 func handleSimpleFormatButtonClick() {
-	formatOptions.SetUseTreeFormat(false)
+	FormatOptions.SetUseTreeFormat(false)
 	OutputEntry.SetText(formatInput())
 }
 
 func handleTreeFormatButtonClick() {
-	formatOptions.SetUseTreeFormat(true)
+	FormatOptions.SetUseTreeFormat(true)
 	OutputEntry.SetText(formatInput())
 }
 
@@ -184,17 +198,27 @@ func handleOnChangeOfOutputEntry(newText string) {
 	changeDisabledStateOfCopyButton(newText)
 }
 
-func handleShowCompactFormularsClick(newValue bool, showVariableNamesCheck *widget.Check) {
-	formatOptions.SetShowCompactFunction(newValue)
+func handleHideFormularClick(newValue bool) {
+	FormatOptions.SetHideFormular(newValue)
 
-	changeDisableStateOfShowVariableNamesCheck(newValue, showVariableNamesCheck)
+	changeDisableStateOfCheckWidget(!newValue, ShowCompactFormularsCheck)
+
+	if ShowCompactFormularsCheck.Checked {
+		changeDisableStateOfCheckWidget(!newValue, ShowVariableNamesCheck)
+	}
 }
 
-func changeDisableStateOfShowVariableNamesCheck(newValue bool, ShowVariableNamesCheck *widget.Check) {
+func handleShowCompactFormularClick(newValue bool) {
+	FormatOptions.SetShowCompactFormular(newValue)
+
+	changeDisableStateOfCheckWidget(newValue, ShowVariableNamesCheck)
+}
+
+func changeDisableStateOfCheckWidget(newValue bool, checkWidgetToChange *widget.Check) {
 	if newValue {
-		ShowVariableNamesCheck.Enable()
+		checkWidgetToChange.Enable()
 	} else {
-		ShowVariableNamesCheck.Disable()
+		checkWidgetToChange.Disable()
 	}
 }
 
@@ -214,10 +238,10 @@ func formatInput() string {
 		return err.Error()
 	}
 
-	if formatOptions.UseTreeFormat {
-		formattedString = util.FormatExplainApiDocument(explainApiDocument, formatOptions)
+	if FormatOptions.UseTreeFormat {
+		formattedString = util.FormatExplainApiDocument(explainApiDocument, FormatOptions)
 	} else {
-		formattedString = util.FormatExplainApiDocument(explainApiDocument, formatOptions)
+		formattedString = util.FormatExplainApiDocument(explainApiDocument, FormatOptions)
 	}
 
 	return formattedString
