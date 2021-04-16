@@ -4,6 +4,7 @@ import (
 	"fyne.io/fyne/v2"
 	"fyne.io/fyne/v2/app"
 	"fyne.io/fyne/v2/container"
+	"fyne.io/fyne/v2/theme"
 	"fyne.io/fyne/v2/widget"
 
 	"ESEF/util"
@@ -22,13 +23,18 @@ const PasteFromClipboardButtonLabel = "Paste from Clipboard"
 const ShowCompactFormularsLabel = "Show compact TF/IDF formulars"
 const ShowVariableNamesInFormularsLabel = "Show variable names in formulars"
 const HideDetailedFormularsCheckLabel = "Hide detailed TF/IDF formulars"
+const DarkThemeButtonLabel = "Dark"
+const LightThemeButtonLabel = "Light"
+const SettingsMenuLabel = "Settings" // If changed the settings menu will move into it's own menu tab instead of being under "ESEF"
+const SettingsLabel = SettingsMenuLabel
 
 const SplitContainerOffset = 0.35
 
 var FormatOptions = new(util.FormatOptions)
 
-var WindowSize = fyne.NewSize(1400, 800)
-var Window fyne.Window
+var MainWindowSize = fyne.NewSize(1400, 800)
+var SettingsWindowSize = fyne.NewSize(400, 200)
+var window fyne.Window
 
 var InputEntry *widget.Entry
 var InputLabel *widget.Label
@@ -45,9 +51,11 @@ func main() {
 
 func buildMainWindow() fyne.Window {
 	application := app.New()
-	Window = application.NewWindow(AppTitle)
+	window = application.NewWindow(AppTitle)
 
-	Window.SetContent(container.NewBorder(
+	buildSettingsMenu(application, window)
+
+	window.SetContent(container.NewBorder(
 		nil,
 		buildFormatArea(),
 		nil,
@@ -55,10 +63,40 @@ func buildMainWindow() fyne.Window {
 		buildInputOutputArea(),
 	))
 
-	Window.Resize(WindowSize)
-	Window.CenterOnScreen()
+	window.Resize(MainWindowSize)
+	window.CenterOnScreen()
 
-	return Window
+	return window
+}
+
+func buildSettingsMenu(application fyne.App, mainWindow fyne.Window) {
+	settingsMenuItem := fyne.NewMenuItem(SettingsMenuLabel, func() {
+		buildSettingsWindow(application)
+	})
+
+	mainMenu := fyne.NewMainMenu(fyne.NewMenu(SettingsLabel, settingsMenuItem))
+	mainWindow.SetMainMenu(mainMenu)
+	mainWindow.SetMaster()
+}
+
+func buildSettingsWindow(application fyne.App) {
+	settingsWindow := application.NewWindow(SettingsLabel)
+	settingsWindow.SetContent(buildSettingsArea(application))
+	settingsWindow.Resize(SettingsWindowSize)
+	settingsWindow.CenterOnScreen()
+	settingsWindow.Show()
+}
+
+func buildSettingsArea(app fyne.App) fyne.CanvasObject {
+	darkThemeButton := widget.NewButton(DarkThemeButtonLabel, func() {
+		app.Settings().SetTheme(theme.DarkTheme())
+	})
+
+	lightThemeButton := widget.NewButton(LightThemeButtonLabel, func() {
+		app.Settings().SetTheme(theme.LightTheme())
+	})
+
+	return widget.NewCard(SettingsLabel, "", container.NewVBox(darkThemeButton, lightThemeButton))
 }
 
 func buildFormatArea() *widget.Card {
@@ -182,7 +220,7 @@ func handleTreeFormatButtonClick() {
 }
 
 func handlePasteFromClipboardButtonClick() {
-	InputEntry.SetText(Window.Clipboard().Content())
+	InputEntry.SetText(window.Clipboard().Content())
 }
 
 func handleClearInputButtonClick() {
@@ -190,7 +228,7 @@ func handleClearInputButtonClick() {
 }
 
 func handleCopyOutputButtonClick() {
-	Window.Clipboard().SetContent(OutputEntry.Text)
+	window.Clipboard().SetContent(OutputEntry.Text)
 	sendOSNotification(CopiedOutputToClipboardMessageText)
 }
 
