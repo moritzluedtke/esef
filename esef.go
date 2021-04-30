@@ -170,7 +170,11 @@ func buildFormatOptions() fyne.CanvasObject {
 
 func buildInputOutputArea() *container.Split {
 	splitContainer := container.NewHSplit(
-		buildInputArea(),
+		container.NewAdaptiveGrid(
+			1,
+			buildInputArea(),
+			buildFormatArea(),
+		),
 		buildOutputArea(),
 	)
 
