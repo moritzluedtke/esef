@@ -12,14 +12,12 @@ import (
 
 const (
 	AppTitle                           = "ESEF"
-	InputEntryPlaceholder              = "Enter a valid explain API response (json)"
+	InputEntryPlaceholder              = "Enter a valid Elasticsearch Explain API response (json)"
 	CopiedOutputToClipboardMessageText = "Copied output to clipboard!"
 	InputLabelText                     = "Input"
 	OutputLabelText                    = "Output"
-	SimpleFormatButtonLabel            = "Simple Format"
-	TreeFormatButtonLabel              = "Tree Format"
 	CopyButtonLabel                    = "Copy to Clipboard"
-	ClearButtonLabel                   = "Clear"
+	ClearButtonLabel                   = "Clear All"
 	PasteFromClipboardButtonLabel      = "Paste from Clipboard"
 	ShowCompactFormularsLabel          = "Show compact TF/IDF formulars"
 	ShowVariableNamesInFormularsLabel  = "Show variable names in formulars"
@@ -29,6 +27,10 @@ const (
 	SettingsMenuLabel                  = "Settings" // If changed the settings menu will move into it's own menu tab instead of being under "ESEF"
 	SettingsLabel                      = SettingsMenuLabel
 	FormatCardLabel                    = "Format"
+	ShowGuiOutputText                  = "Show GUI Output"
+	ShowTextOutputText                 = "Show Text Output"
+	SimpleFormatText                   = "Simple Format"
+	TreeFormatText                     = "Tree Format"
 
 	SplitContainerOffset   = 0.35
 	SystemDefaultThemeName = "system default"
@@ -50,6 +52,10 @@ var CopyButton *widget.Button
 var HideFormularsCheck *widget.Check
 var ShowCompactFormularsCheck *widget.Check
 var ShowVariableNamesCheck *widget.Check
+var FormatRadioGroup *widget.RadioGroup
+var GuiTextOutputRadioGroup *widget.RadioGroup
+var TextOutputArea fyne.CanvasObject
+var GuiOutputArea fyne.CanvasObject
 
 func main() {
 	buildMainWindow().ShowAndRun()
@@ -63,7 +69,7 @@ func buildMainWindow() fyne.Window {
 
 	window.SetContent(container.NewBorder(
 		nil,
-		buildFormatArea(),
+		nil,
 		nil,
 		nil,
 		buildInputOutputArea(),
@@ -126,24 +132,13 @@ func setTheme(inputTheme string, app fyne.App, settings *util.Settings) {
 
 func buildFormatArea() *widget.Card {
 	return widget.NewCard(FormatCardLabel, "",
-		container.NewVBox(
-			buildFormatOptions(),
-			container.NewAdaptiveGrid(
-				2,
-				widget.NewButton(SimpleFormatButtonLabel, func() {
-					handleSimpleFormatButtonClick()
-				}),
-				widget.NewButton(TreeFormatButtonLabel, func() {
-					handleTreeFormatButtonClick()
-				}),
-			),
-		),
+		buildFormatOptions(),
 	)
 }
 
 func buildFormatOptions() fyne.CanvasObject {
 	ShowVariableNamesCheck = widget.NewCheck(ShowVariableNamesInFormularsLabel, func(newValue bool) {
-		FormatOptions.SetShowVariableNamesInFormular(newValue)
+		handleShowVariableNamesInFormularClick(newValue)
 	})
 	ShowVariableNamesCheck.DisableableWidget = widget.DisableableWidget{} // !this NEEDs to be first, then .Disable()!
 	ShowVariableNamesCheck.Disable()
@@ -161,21 +156,64 @@ func buildFormatOptions() fyne.CanvasObject {
 
 	FormatOptions.SetHideFormular(true)
 
+	FormatRadioGroup = widget.NewRadioGroup([]string{TreeFormatText, SimpleFormatText}, handleFormatRadioGroupToggle) // this needs to be first
+	FormatRadioGroup.SetSelected(TreeFormatText)
+	FormatRadioGroup.Horizontal = true
+
+	GuiTextOutputRadioGroup = widget.NewRadioGroup([]string{ShowTextOutputText, ShowGuiOutputText}, handleGuiTextOutputRadioGroupToggle) // then comes this
+	GuiTextOutputRadioGroup.SetSelected(ShowTextOutputText)
+	GuiTextOutputRadioGroup.Horizontal = true
+
 	return container.NewVBox(
+		GuiTextOutputRadioGroup,
+		FormatRadioGroup,
 		HideFormularsCheck,
 		ShowCompactFormularsCheck,
 		ShowVariableNamesCheck,
 	)
 }
 
+func handleShowVariableNamesInFormularClick(newValue bool) {
+	FormatOptions.SetShowVariableNamesInFormular(newValue)
+	formatInput()
+}
+
+func handleFormatRadioGroupToggle(newValue string) {
+	if newValue == SimpleFormatText {
+		FormatOptions.SetUseTreeFormat(false)
+	} else {
+		FormatOptions.SetUseTreeFormat(true)
+	}
+
+	formatInput()
+}
+
+func handleGuiTextOutputRadioGroupToggle(newValue string) {
+	if newValue == ShowTextOutputText {
+		TextOutputArea.Show()
+		GuiOutputArea.Hide()
+		FormatRadioGroup.Show()
+	} else {
+		GuiOutputArea.Show()
+		TextOutputArea.Hide()
+		FormatRadioGroup.Hide()
+	}
+}
+
 func buildInputOutputArea() *container.Split {
+	TextOutputArea = buildTextOutputArea()
+	GuiOutputArea = buildGuiOutputArea()
+
 	splitContainer := container.NewHSplit(
 		container.NewAdaptiveGrid(
 			1,
 			buildInputArea(),
 			buildFormatArea(),
 		),
-		buildOutputArea(),
+		container.NewMax(
+			TextOutputArea,
+			GuiOutputArea,
+		),
 	)
 
 	splitContainer.SetOffset(SplitContainerOffset)
@@ -186,6 +224,7 @@ func buildInputOutputArea() *container.Split {
 func buildInputArea() *widget.Card {
 	InputEntry = widget.NewMultiLineEntry()
 	InputEntry.SetPlaceHolder(InputEntryPlaceholder)
+	InputEntry.OnChanged = handleOnChangeOfInputEntry
 	InputEntry.TextStyle = fyne.TextStyle{Monospace: true}
 
 	InputLabel = widget.NewLabel(InputLabelText)
@@ -212,7 +251,7 @@ func buildInputArea() *widget.Card {
 	)
 }
 
-func buildOutputArea() *widget.Card {
+func buildTextOutputArea() *widget.Card {
 	OutputEntry = widget.NewMultiLineEntry()
 	OutputEntry.OnChanged = handleOnChangeOfOutputEntry
 	OutputEntry.TextStyle = fyne.TextStyle{Monospace: true}
@@ -238,14 +277,13 @@ func buildOutputArea() *widget.Card {
 	)
 }
 
-func handleSimpleFormatButtonClick() {
-	FormatOptions.SetUseTreeFormat(false)
-	OutputEntry.SetText(formatInput())
-}
+func buildGuiOutputArea() *widget.Card {
 
-func handleTreeFormatButtonClick() {
-	FormatOptions.SetUseTreeFormat(true)
-	OutputEntry.SetText(formatInput())
+	return widget.NewCard(
+		OutputLabelText,
+		"Test",
+		nil,
+	)
 }
 
 func handlePasteFromClipboardButtonClick() {
@@ -254,6 +292,7 @@ func handlePasteFromClipboardButtonClick() {
 
 func handleClearInputButtonClick() {
 	InputEntry.SetText("")
+	OutputEntry.SetText("")
 }
 
 func handleCopyOutputButtonClick() {
@@ -265,6 +304,12 @@ func handleOnChangeOfOutputEntry(newText string) {
 	changeDisabledStateOfCopyButton(newText)
 }
 
+func handleOnChangeOfInputEntry(newText string) {
+	if newText != "" {
+		formatInput()
+	}
+}
+
 func handleHideFormularClick(newValue bool) {
 	FormatOptions.SetHideFormular(newValue)
 
@@ -273,12 +318,16 @@ func handleHideFormularClick(newValue bool) {
 	if ShowCompactFormularsCheck.Checked {
 		changeDisableStateOfCheckWidget(!newValue, ShowVariableNamesCheck)
 	}
+
+	formatInput()
 }
 
 func handleShowCompactFormularClick(newValue bool) {
 	FormatOptions.SetShowCompactFormular(newValue)
 
 	changeDisableStateOfCheckWidget(newValue, ShowVariableNamesCheck)
+
+	formatInput()
 }
 
 func changeDisableStateOfCheckWidget(newValue bool, checkWidgetToChange *widget.Check) {
@@ -297,21 +346,17 @@ func changeDisabledStateOfCopyButton(newText string) {
 	}
 }
 
-func formatInput() string {
-	var formattedString string
+func formatInput() {
+	var newOutput string
+
 	explainApiDocument, err := util.ExtractDataFromExplainAPI(InputEntry.Text)
 
 	if err != nil {
-		return err.Error()
+		newOutput = err.Error()
 	}
 
-	if FormatOptions.UseTreeFormat {
-		formattedString = util.FormatExplainApiDocument(explainApiDocument, FormatOptions)
-	} else {
-		formattedString = util.FormatExplainApiDocument(explainApiDocument, FormatOptions)
-	}
-
-	return formattedString
+	newOutput = util.FormatExplainApiDocument(explainApiDocument, FormatOptions)
+	OutputEntry.SetText(newOutput)
 }
 
 func sendOSNotification(message string) {
