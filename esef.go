@@ -1,6 +1,7 @@
 package main
 
 import (
+	"fmt"
 	"fyne.io/fyne/v2"
 	"fyne.io/fyne/v2/app"
 	"fyne.io/fyne/v2/container"
@@ -36,6 +37,10 @@ const (
 	SystemDefaultThemeName = "system default"
 	LightThemeName         = "light"
 	DarkThemeName          = "dark"
+
+	IndexNameFormat  = "Index: %s"
+	DocumentIdFormat = "Document ID: %s"
+	MatchedFormat    = "Matched: %t"
 )
 
 var FormatOptions = new(util.FormatOptions)
@@ -53,9 +58,14 @@ var HideFormularsCheck *widget.Check
 var ShowCompactFormularsCheck *widget.Check
 var ShowVariableNamesCheck *widget.Check
 var FormatRadioGroup *widget.RadioGroup
-var GuiTextOutputRadioGroup *widget.RadioGroup
+var OutputStyleRadioGroup *widget.RadioGroup
 var TextOutputArea fyne.CanvasObject
 var GuiOutputArea fyne.CanvasObject
+var TreeOutput fyne.CanvasObject
+var TreeOutputContainer *fyne.Container
+var TreeIndexnameLabel = widget.NewLabel(IndexNameFormat)
+var TreeDocumentIdLabel = widget.NewLabel(DocumentIdFormat)
+var TreeMatchedLabel = widget.NewLabel(MatchedFormat)
 
 func main() {
 	buildMainWindow().ShowAndRun()
@@ -158,14 +168,16 @@ func buildFormatOptions() fyne.CanvasObject {
 
 	FormatRadioGroup = widget.NewRadioGroup([]string{TreeFormatText, SimpleFormatText}, handleFormatRadioGroupToggle) // this needs to be first
 	FormatRadioGroup.SetSelected(TreeFormatText)
+	FormatRadioGroup.Required = true
 	FormatRadioGroup.Horizontal = true
 
-	GuiTextOutputRadioGroup = widget.NewRadioGroup([]string{ShowTextOutputText, ShowGuiOutputText}, handleGuiTextOutputRadioGroupToggle) // then comes this
-	GuiTextOutputRadioGroup.SetSelected(ShowTextOutputText)
-	GuiTextOutputRadioGroup.Horizontal = true
+	OutputStyleRadioGroup = widget.NewRadioGroup([]string{ShowTextOutputText, ShowGuiOutputText}, handleGuiTextOutputRadioGroupToggle) // then comes this
+	OutputStyleRadioGroup.SetSelected(ShowTextOutputText)
+	OutputStyleRadioGroup.Required = true
+	OutputStyleRadioGroup.Horizontal = true
 
 	return container.NewVBox(
-		GuiTextOutputRadioGroup,
+		OutputStyleRadioGroup,
 		FormatRadioGroup,
 		HideFormularsCheck,
 		ShowCompactFormularsCheck,
@@ -192,17 +204,25 @@ func handleGuiTextOutputRadioGroupToggle(newValue string) {
 	if newValue == ShowTextOutputText {
 		TextOutputArea.Show()
 		GuiOutputArea.Hide()
+
 		FormatRadioGroup.Show()
+		ShowCompactFormularsCheck.Show()
+		ShowVariableNamesCheck.Show()
+		HideFormularsCheck.Show()
 	} else {
 		GuiOutputArea.Show()
 		TextOutputArea.Hide()
+
 		FormatRadioGroup.Hide()
+		ShowCompactFormularsCheck.Hide()
+		ShowVariableNamesCheck.Hide()
+		HideFormularsCheck.Hide()
 	}
 }
 
 func buildInputOutputArea() *container.Split {
 	TextOutputArea = buildTextOutputArea()
-	GuiOutputArea = buildGuiOutputArea()
+	GuiOutputArea = buildTreeOutputArea()
 
 	splitContainer := container.NewHSplit(
 		container.NewAdaptiveGrid(
@@ -277,13 +297,28 @@ func buildTextOutputArea() *widget.Card {
 	)
 }
 
-func buildGuiOutputArea() *widget.Card {
-
+func buildTreeOutputArea() *widget.Card {
+	TreeOutput = buildBlankTree()
+	TreeOutputContainer = container.NewMax(TreeOutput)
 	return widget.NewCard(
 		OutputLabelText,
-		"Test",
-		nil,
+		"",
+		container.NewBorder(
+			container.NewVBox(
+				TreeIndexnameLabel,
+				TreeDocumentIdLabel,
+				TreeMatchedLabel,
+			),
+			nil,
+			nil,
+			nil,
+			TreeOutputContainer,
+		),
 	)
+}
+
+func buildBlankTree() fyne.CanvasObject {
+	return widget.NewTreeWithStrings(map[string][]string{"": {"Nothing formatted yet."}})
 }
 
 func handlePasteFromClipboardButtonClick() {
@@ -304,10 +339,8 @@ func handleOnChangeOfOutputEntry(newText string) {
 	changeDisabledStateOfCopyButton(newText)
 }
 
-func handleOnChangeOfInputEntry(newText string) {
-	if newText != "" {
-		formatInput()
-	}
+func handleOnChangeOfInputEntry(_ string) {
+	formatInput()
 }
 
 func handleHideFormularClick(newValue bool) {
@@ -347,16 +380,31 @@ func changeDisabledStateOfCopyButton(newText string) {
 }
 
 func formatInput() {
-	var newOutput string
+	if InputEntry.Text != "" {
+		var newTextOutput string
 
-	explainApiDocument, err := util.ExtractDataFromExplainAPI(InputEntry.Text)
+		explainApiDocument, err := util.ExtractDataFromExplainAPI(InputEntry.Text)
+		if err != nil {
+			newTextOutput = err.Error()
+		}
 
-	if err != nil {
-		newOutput = err.Error()
+		newTextOutput = util.FormatExplainApiDocument(explainApiDocument, FormatOptions)
+		OutputEntry.SetText(newTextOutput)
+
+		updateTreeOutputInGui(explainApiDocument, util.FormatExplainApiDocumentAsGuiTree(explainApiDocument))
 	}
+}
 
-	newOutput = util.FormatExplainApiDocument(explainApiDocument, FormatOptions)
-	OutputEntry.SetText(newOutput)
+func updateTreeOutputInGui(explainApiDocument util.ExplainAPIDocument, newTree fyne.CanvasObject) {
+	TreeIndexnameLabel.SetText(fmt.Sprintf(IndexNameFormat, explainApiDocument.Indexname))
+	TreeDocumentIdLabel.SetText(fmt.Sprintf(DocumentIdFormat, explainApiDocument.DocumentId))
+	TreeMatchedLabel.SetText(fmt.Sprintf(MatchedFormat, explainApiDocument.Matched))
+
+	TreeOutputContainer.Remove(TreeOutput)
+	TreeOutputContainer.Add(newTree)
+	TreeOutputContainer.Refresh()
+
+	TreeOutput = newTree
 }
 
 func sendOSNotification(message string) {

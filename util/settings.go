@@ -11,8 +11,8 @@ import (
 )
 
 /*
-* Copied in large part from the official Fyne Widget Demo.
-* https://github.com/fyne-io/fyne/tree/master/cmd/fyne_demo
+ * Copied in large part from the official Fyne Widget Demo.
+ * https://github.com/fyne-io/fyne/tree/master/cmd/fyne_demo
  */
 
 type Settings struct {

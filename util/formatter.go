@@ -2,29 +2,33 @@ package util
 
 import (
 	"fmt"
+	"fyne.io/fyne/v2"
+	"fyne.io/fyne/v2/widget"
 	"regexp"
 	"strings"
 )
 
-const DefaultExplanationIndentation = "  "
-const EmptySpace = "   "
-const IShape = "│  "
-const TShape = "├─ "
-const LShape = "└─ "
+const (
+	DefaultExplanationIndentation = "  "
+	EmptySpace                    = "   "
+	IShape                        = "│  "
+	TShape                        = "├─ "
+	LShape                        = "└─ "
+	EmptyStartString              = ""
 
-const EmptyStartString = ""
+	IDF = "idf"
+	TF  = "tf"
 
-const IDF = "idf"
-const TF = "tf"
-const IdfRegex = `idf, computed as log\(1 \+ \(N - n \+ 0\.5\) \/ \(n \+ 0\.5\)\) from:`
-const TfRegex = `tf, computed as freq \/ \(freq \+ k1 \* \(1 \- b \+ b \* dl \/ avgdl\)\) from:`
+	IdfRegex = `idf, computed as log\(1 \+ \(N - n \+ 0\.5\) \/ \(n \+ 0\.5\)\) from:`
+	TfRegex  = `tf, computed as freq \/ \(freq \+ k1 \* \(1 \- b \+ b \* dl \/ avgdl\)\) from:`
 
-const DocumentInfoHeaderFormat = "index: %s\ndocumentId: %s\nmatched: %t\nexplanation:\n%s"
-const ExplainNodeFormat = "%s%g (%s)\n"
-const IdfFormularFormat = "idf, computed as log(1 + (%g - %g + 0.5) / (%g + 0.5))"                                                  // N, n, n
-const IdfFormularDetailedFormat = "idf, computed as log(1 + (%g [N] - %g [n] + 0.5) / (%g [n] + 0.5))"                              // N, n, n
-const TfFormularFormat = "tf, computed as %g / (%g + %g * (1 - %g + %g * %g / %g))"                                                 // freq, freq, k1, b, b, dl, avgdl
-const TfFormularDetailedFormat = "tf, computed as %g [freq] / (%g [freq] + %g [k1] * (1 - %g [b] + %g [b] * %g [dl] / %g [avgdl]))" // freq, freq, k1, b, b, dl, avgdl
+	DocumentInfoHeaderFormat  = "index: %s\ndocumentId: %s\nmatched: %t\nexplanation:\n%s"
+	ExplainNodeFormat         = "%s%g (%s)\n"
+	IdfFormularFormat         = "idf, computed as log(1 + (%g - %g + 0.5) / (%g + 0.5))"                                           // N, n, n
+	IdfFormularDetailedFormat = "idf, computed as log(1 + (%g [N] - %g [n] + 0.5) / (%g [n] + 0.5))"                               // N, n, n
+	TfFormularFormat          = "tf, computed as %g / (%g + %g * (1 - %g + %g * %g / %g))"                                         // freq, freq, k1, b, b, dl, avgdl
+	TfFormularDetailedFormat  = "tf, computed as %g [freq] / (%g [freq] + %g [k1] * (1 - %g [b] + %g [b] * %g [dl] / %g [avgdl]))" // freq, freq, k1, b, b, dl, avgdl
+)
 
 func FormatExplainApiDocument(doc ExplainAPIDocument, formatOptions *FormatOptions) string {
 	var formattedExplanation string
@@ -35,7 +39,19 @@ func FormatExplainApiDocument(doc ExplainAPIDocument, formatOptions *FormatOptio
 		formattedExplanation = formatExplainNodesToSimpleFormat(0, formatOptions, doc.Explanation)
 	}
 
-	return fmt.Sprintf(DocumentInfoHeaderFormat, doc.Index, doc.DocumentId, doc.Matched, formattedExplanation)
+	return fmt.Sprintf(DocumentInfoHeaderFormat, doc.Indexname, doc.DocumentId, doc.Matched, formattedExplanation)
+}
+
+func FormatExplainApiDocumentAsGuiTree(doc ExplainAPIDocument) fyne.CanvasObject {
+	data := map[string][]string{
+		"":  {"A"},
+		"A": {"B", "D", "H", "J", "L", "O", "P", "S", "V"},
+		"B": {"C"},
+	}
+
+	tree := widget.NewTreeWithStrings(data)
+	tree.OpenBranch("A")
+	return tree
 }
 
 func formatExplainNodesToSimpleFormat(treeLevel int, formatOptions *FormatOptions, nodes ...ExplanationNode) string {
