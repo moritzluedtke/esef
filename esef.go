@@ -10,25 +10,31 @@ import (
 	"ESEF/util"
 )
 
-const AppTitle = "ESEF"
-const CopiedOutputToClipboardMessageText = "Copied output to clipboard!"
-const InputEntryPlaceholder = "Enter a valid explain API response (json)"
-const InputLabelText = "Input"
-const OutputLabelText = "Output"
-const SimpleFormatButtonLabel = "Simple Format"
-const TreeFormatButtonLabel = "Tree Format"
-const CopyButtonLabel = "Copy to Clipboard"
-const ClearButtonLabel = "Clear"
-const PasteFromClipboardButtonLabel = "Paste from Clipboard"
-const ShowCompactFormularsLabel = "Show compact TF/IDF formulars"
-const ShowVariableNamesInFormularsLabel = "Show variable names in formulars"
-const HideDetailedFormularsCheckLabel = "Hide detailed TF/IDF formulars"
-const DarkThemeButtonLabel = "Dark"
-const LightThemeButtonLabel = "Light"
-const SettingsMenuLabel = "Settings" // If changed the settings menu will move into it's own menu tab instead of being under "ESEF"
-const SettingsLabel = SettingsMenuLabel
+const (
+	AppTitle                           = "ESEF"
+	InputEntryPlaceholder              = "Enter a valid explain API response (json)"
+	CopiedOutputToClipboardMessageText = "Copied output to clipboard!"
+	InputLabelText                     = "Input"
+	OutputLabelText                    = "Output"
+	SimpleFormatButtonLabel            = "Simple Format"
+	TreeFormatButtonLabel              = "Tree Format"
+	CopyButtonLabel                    = "Copy to Clipboard"
+	ClearButtonLabel                   = "Clear"
+	PasteFromClipboardButtonLabel      = "Paste from Clipboard"
+	ShowCompactFormularsLabel          = "Show compact TF/IDF formulars"
+	ShowVariableNamesInFormularsLabel  = "Show variable names in formulars"
+	HideDetailedFormularsCheckLabel    = "Hide detailed TF/IDF formulars"
+	DarkThemeButtonLabel               = "Dark Theme"
+	LightThemeButtonLabel              = "Light Theme"
+	SettingsMenuLabel                  = "Settings" // If changed the settings menu will move into it's own menu tab instead of being under "ESEF"
+	SettingsLabel                      = SettingsMenuLabel
+	FormatCardLabel                    = "Format"
 
-const SplitContainerOffset = 0.35
+	SplitContainerOffset   = 0.35
+	SystemDefaultThemeName = "system default"
+	LightThemeName         = "light"
+	DarkThemeName          = "dark"
+)
 
 var FormatOptions = new(util.FormatOptions)
 
@@ -70,8 +76,9 @@ func buildMainWindow() fyne.Window {
 }
 
 func buildSettingsMenu(application fyne.App, mainWindow fyne.Window) {
+	settings := util.NewSettings()
 	settingsMenuItem := fyne.NewMenuItem(SettingsMenuLabel, func() {
-		buildSettingsWindow(application)
+		buildSettingsWindow(application, settings)
 	})
 
 	mainMenu := fyne.NewMainMenu(fyne.NewMenu(SettingsLabel, settingsMenuItem))
@@ -79,28 +86,46 @@ func buildSettingsMenu(application fyne.App, mainWindow fyne.Window) {
 	mainWindow.SetMaster()
 }
 
-func buildSettingsWindow(application fyne.App) {
+func buildSettingsWindow(application fyne.App, settings *util.Settings) {
 	settingsWindow := application.NewWindow(SettingsLabel)
-	settingsWindow.SetContent(buildSettingsArea(application))
+	settingsWindow.SetContent(buildSettingsArea(application, settings))
 	settingsWindow.Resize(SettingsWindowSize)
 	settingsWindow.CenterOnScreen()
 	settingsWindow.Show()
 }
 
-func buildSettingsArea(app fyne.App) fyne.CanvasObject {
+func buildSettingsArea(app fyne.App, settings *util.Settings) fyne.CanvasObject {
+	if settings.FyneSettings.ThemeName != "" {
+		settings.FyneSettings.ThemeName = SystemDefaultThemeName
+	}
+
 	darkThemeButton := widget.NewButton(DarkThemeButtonLabel, func() {
-		app.Settings().SetTheme(theme.DarkTheme())
+		setTheme(DarkThemeName, app, settings)
 	})
 
 	lightThemeButton := widget.NewButton(LightThemeButtonLabel, func() {
-		app.Settings().SetTheme(theme.LightTheme())
+		setTheme(LightThemeName, app, settings)
 	})
 
 	return widget.NewCard(SettingsLabel, "", container.NewVBox(darkThemeButton, lightThemeButton))
 }
 
+func setTheme(inputTheme string, app fyne.App, settings *util.Settings) {
+	if inputTheme == LightThemeName {
+		app.Settings().SetTheme(theme.LightTheme())
+	} else {
+		app.Settings().SetTheme(theme.DarkTheme())
+	}
+
+	settings.FyneSettings.ThemeName = inputTheme
+	err := settings.Save()
+	if err != nil {
+		return
+	}
+}
+
 func buildFormatArea() *widget.Card {
-	return widget.NewCard("Format", "",
+	return widget.NewCard(FormatCardLabel, "",
 		container.NewVBox(
 			buildFormatOptions(),
 			container.NewAdaptiveGrid(
