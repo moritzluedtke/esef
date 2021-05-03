@@ -12,26 +12,26 @@ import (
 )
 
 const (
-	AppTitle                            = "ESEF"
-	InputEntryPlaceholder               = "Enter a valid Elasticsearch Explain API response (json)"
-	CopiedOutputToClipboardMessageText  = "Copied output to clipboard!"
-	InputLabelText                      = "Input"
-	OutputLabelText                     = "Output"
-	CopyButtonLabel                     = "Copy to Clipboard"
-	ClearButtonLabel                    = "Clear All"
-	PasteFromClipboardButtonLabel       = "Paste from Clipboard"
-	ShowCompactFormularsLabel           = "Show compact TF/IDF formulars"
-	ShowVariableNamesInFormularsLabel   = "Show variable names in formulars"
-	ShowUltraCompactFormularsCheckLabel = "Show ultra compact TF/IDF formulars"
-	DarkThemeButtonLabel                = "Dark Theme"
-	LightThemeButtonLabel               = "Light Theme"
-	SettingsMenuLabel                   = "Settings" // If changed the settings menu will move into it's own menu tab instead of being under "ESEF"
-	SettingsLabel                       = SettingsMenuLabel
-	FormatCardLabel                     = "Format"
-	ShowGuiOutputText                   = "Show GUI Output"
-	ShowTextOutputText                  = "Show Text Output"
-	SimpleFormatText                    = "Simple Format"
-	TreeFormatText                      = "Tree Format"
+	AppTitle                           = "ESEF"
+	InputEntryPlaceholder              = "Enter a valid Elasticsearch Explain API response (json)"
+	CopiedOutputToClipboardMessageText = "Copied output to clipboard!"
+	InputLabelText                     = "Input"
+	OutputLabelText                    = "Output"
+	CopyButtonLabel                    = "Copy to Clipboard"
+	ClearButtonLabel                   = "Clear All"
+	PasteFromClipboardButtonLabel      = "Paste from Clipboard"
+	ShowCompactFormularsLabel          = "Show compact TF/IDF formulars"
+	ShowVariableNamesInFormularsLabel  = "Show variable names in formulars"
+	HideFormularsCheckLabel            = "Hide TF/IDF formulars"
+	DarkThemeButtonLabel               = "Dark Theme"
+	LightThemeButtonLabel              = "Light Theme"
+	SettingsMenuLabel                  = "Settings" // If changed the settings menu will move into it's own menu tab instead of being under "ESEF"
+	SettingsLabel                      = SettingsMenuLabel
+	FormatCardLabel                    = "Format"
+	ShowGuiOutputText                  = "Show GUI Output"
+	ShowTextOutputText                 = "Show Text Output"
+	SimpleFormatText                   = "Simple Format"
+	TreeFormatText                     = "Tree Format"
 
 	SplitContainerOffset   = 0.35
 	SystemDefaultThemeName = "system default"
@@ -159,7 +159,7 @@ func buildFormatOptions() fyne.CanvasObject {
 	ShowCompactFormularsCheck.DisableableWidget = widget.DisableableWidget{}
 	ShowCompactFormularsCheck.Disable()
 
-	HideFormularsCheck = widget.NewCheck(ShowUltraCompactFormularsCheckLabel, func(newValue bool) {
+	HideFormularsCheck = widget.NewCheck(HideFormularsCheckLabel, func(newValue bool) {
 		handleHideFormularClick(newValue)
 	})
 	HideFormularsCheck.Checked = true
