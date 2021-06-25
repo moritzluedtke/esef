@@ -32,6 +32,8 @@ const (
 	ShowTextOutputText                 = "Show Text Output"
 	SimpleFormatText                   = "Simple Format"
 	TreeFormatText                     = "Tree Format"
+	InputOptionExplainApiText          = "Explain API"
+	InputOptionSearchProfilerText      = "Search Profiler"
 
 	SplitContainerOffset   = 0.35
 	SystemDefaultThemeName = "system default"
@@ -59,13 +61,17 @@ var ShowCompactFormularsCheck *widget.Check
 var ShowVariableNamesCheck *widget.Check
 var FormatRadioGroup *widget.RadioGroup
 var OutputStyleRadioGroup *widget.RadioGroup
+var InputOptionsRadioGroup *widget.RadioGroup
 var TextOutputArea fyne.CanvasObject
 var GuiOutputArea fyne.CanvasObject
+var TextOutputFormatOptions = new(fyne.Container)
+var GuiOutputFormatOptions = new(fyne.Container)
 var TreeOutput fyne.CanvasObject
+var TreeWidget *widget.Tree
 var TreeOutputContainer *fyne.Container
-var TreeIndexnameLabel = widget.NewLabel(IndexNameFormat)
-var TreeDocumentIdLabel = widget.NewLabel(DocumentIdFormat)
-var TreeMatchedLabel = widget.NewLabel(MatchedFormat)
+var TreeIndexnameLabel = widget.NewLabel(fmt.Sprintf(IndexNameFormat, ""))
+var TreeDocumentIdLabel = widget.NewLabel(fmt.Sprintf(DocumentIdFormat, ""))
+var TreeMatchedLabel = widget.NewLabel(fmt.Sprintf(MatchedFormat, false))
 
 func main() {
 	buildMainWindow().ShowAndRun()
@@ -140,53 +146,8 @@ func setTheme(inputTheme string, app fyne.App, settings *util.Settings) {
 	}
 }
 
-func buildFormatArea() *widget.Card {
-	return widget.NewCard(FormatCardLabel, "",
-		buildFormatOptions(),
-	)
-}
-
-func buildFormatOptions() fyne.CanvasObject {
-	ShowVariableNamesCheck = widget.NewCheck(ShowVariableNamesInFormularsLabel, func(newValue bool) {
-		handleShowVariableNamesInFormularClick(newValue)
-	})
-	ShowVariableNamesCheck.DisableableWidget = widget.DisableableWidget{} // !this NEEDs to be first, then .Disable()!
-	ShowVariableNamesCheck.Disable()
-
-	ShowCompactFormularsCheck = widget.NewCheck(ShowCompactFormularsLabel, func(newValue bool) {
-		handleShowCompactFormularClick(newValue)
-	})
-	ShowCompactFormularsCheck.DisableableWidget = widget.DisableableWidget{}
-	ShowCompactFormularsCheck.Disable()
-
-	HideFormularsCheck = widget.NewCheck(HideFormularsCheckLabel, func(newValue bool) {
-		handleHideFormularClick(newValue)
-	})
-	HideFormularsCheck.Checked = true
-
-	FormatOptions.SetHideFormular(true)
-
-	FormatRadioGroup = widget.NewRadioGroup([]string{TreeFormatText, SimpleFormatText}, handleFormatRadioGroupToggle) // this needs to be first
-	FormatRadioGroup.SetSelected(TreeFormatText)
-	FormatRadioGroup.Required = true
-	FormatRadioGroup.Horizontal = true
-
-	OutputStyleRadioGroup = widget.NewRadioGroup([]string{ShowTextOutputText, ShowGuiOutputText}, handleGuiTextOutputRadioGroupToggle) // then comes this
-	OutputStyleRadioGroup.SetSelected(ShowTextOutputText)
-	OutputStyleRadioGroup.Required = true
-	OutputStyleRadioGroup.Horizontal = true
-
-	return container.NewVBox(
-		OutputStyleRadioGroup,
-		FormatRadioGroup,
-		HideFormularsCheck,
-		ShowCompactFormularsCheck,
-		ShowVariableNamesCheck,
-	)
-}
-
 func handleShowVariableNamesInFormularClick(newValue bool) {
-	FormatOptions.SetShowVariableNamesInFormular(newValue)
+	FormatOptions.SetShowVariableNamesInFormulars(newValue)
 	formatInput()
 }
 
@@ -205,19 +166,22 @@ func handleGuiTextOutputRadioGroupToggle(newValue string) {
 		TextOutputArea.Show()
 		GuiOutputArea.Hide()
 
-		FormatRadioGroup.Show()
-		ShowCompactFormularsCheck.Show()
-		ShowVariableNamesCheck.Show()
-		HideFormularsCheck.Show()
+		TextOutputFormatOptions.Show()
+		GuiOutputFormatOptions.Hide()
 	} else {
 		GuiOutputArea.Show()
 		TextOutputArea.Hide()
 
-		FormatRadioGroup.Hide()
-		ShowCompactFormularsCheck.Hide()
-		ShowVariableNamesCheck.Hide()
-		HideFormularsCheck.Hide()
+		TextOutputFormatOptions.Hide()
+		GuiOutputFormatOptions.Show()
 	}
+}
+
+func handleInputOptionRadioGroupToggle(newValue string) {
+	// For later use
+	//if newValue == InputOptionExplainApiText {
+	//} else {
+	//}
 }
 
 func buildInputOutputArea() *container.Split {
@@ -254,21 +218,92 @@ func buildInputArea() *widget.Card {
 		InputLabelText,
 		"",
 		container.NewBorder(
+			//buildInputOptionsArea(), // for later use
 			nil,
 			container.NewAdaptiveGrid(
 				2,
-				widget.NewButton(PasteFromClipboardButtonLabel, func() {
-					handlePasteFromClipboardButtonClick()
-				}),
-				widget.NewButton(ClearButtonLabel, func() {
-					handleClearInputButtonClick()
-				}),
+				widget.NewButton(PasteFromClipboardButtonLabel, handlePasteFromClipboardButtonClick),
+				widget.NewButton(ClearButtonLabel, handleClearInputButtonClick),
 			),
 			nil,
 			nil,
 			InputEntry,
 		),
 	)
+}
+
+func buildInputOptionsArea() fyne.CanvasObject {
+	InputOptionsRadioGroup = widget.NewRadioGroup(
+		[]string{InputOptionExplainApiText, InputOptionSearchProfilerText},
+		handleInputOptionRadioGroupToggle)
+	InputOptionsRadioGroup.SetSelected(InputOptionExplainApiText)
+	InputOptionsRadioGroup.Required = true
+	InputOptionsRadioGroup.Horizontal = true
+
+	return InputOptionsRadioGroup
+}
+
+func buildFormatArea() *widget.Card {
+	return widget.NewCard(FormatCardLabel, "",
+		buildFormatOptions(),
+	)
+}
+
+func buildFormatOptions() fyne.CanvasObject {
+	ShowVariableNamesCheck = widget.NewCheck(ShowVariableNamesInFormularsLabel, func(newValue bool) {
+		handleShowVariableNamesInFormularClick(newValue)
+	})
+	ShowVariableNamesCheck.DisableableWidget = widget.DisableableWidget{} // !This NEEDs to be first, then .Disable()!
+	ShowVariableNamesCheck.Disable()
+
+	ShowCompactFormularsCheck = widget.NewCheck(ShowCompactFormularsLabel, func(newValue bool) {
+		handleShowCompactFormularClick(newValue)
+	})
+	ShowCompactFormularsCheck.DisableableWidget = widget.DisableableWidget{}
+	ShowCompactFormularsCheck.Disable()
+
+	HideFormularsCheck = widget.NewCheck(HideFormularsCheckLabel, func(newValue bool) {
+		handleHideFormularClick(newValue)
+	})
+	HideFormularsCheck.Checked = true
+
+	FormatOptions.SetHideFormulars(true)
+
+	FormatRadioGroup = widget.NewRadioGroup([]string{TreeFormatText, SimpleFormatText}, handleFormatRadioGroupToggle) // this needs to be first
+	FormatRadioGroup.SetSelected(TreeFormatText)
+	FormatRadioGroup.Required = true
+	FormatRadioGroup.Horizontal = true
+
+	OutputStyleRadioGroup = widget.NewRadioGroup([]string{ShowTextOutputText, ShowGuiOutputText}, handleGuiTextOutputRadioGroupToggle) // then comes this
+	OutputStyleRadioGroup.SetSelected(ShowTextOutputText)
+	OutputStyleRadioGroup.Required = true
+	OutputStyleRadioGroup.Horizontal = true
+
+	TextOutputFormatOptions = container.NewVBox(
+		FormatRadioGroup,
+		HideFormularsCheck,
+		ShowCompactFormularsCheck,
+		ShowVariableNamesCheck,
+	)
+
+	showAllButton := widget.NewButton("Show All", func() {
+		TreeWidget.OpenAllBranches()
+	})
+	hideAllButton := widget.NewButton("Hide All", func() {
+		TreeWidget.CloseAllBranches()
+	})
+
+	GuiOutputFormatOptions = container.NewAdaptiveGrid(2,
+		showAllButton,
+		hideAllButton,
+	)
+
+	GuiOutputFormatOptions.Hide()
+
+	return container.NewVBox(
+		OutputStyleRadioGroup,
+		TextOutputFormatOptions,
+		GuiOutputFormatOptions)
 }
 
 func buildTextOutputArea() *widget.Card {
@@ -298,7 +333,8 @@ func buildTextOutputArea() *widget.Card {
 }
 
 func buildTreeOutputArea() *widget.Card {
-	TreeOutput = buildBlankTree()
+	TreeWidget = buildBlankTree()
+	TreeOutput = TreeWidget
 	TreeOutputContainer = container.NewMax(TreeOutput)
 	return widget.NewCard(
 		OutputLabelText,
@@ -317,7 +353,7 @@ func buildTreeOutputArea() *widget.Card {
 	)
 }
 
-func buildBlankTree() fyne.CanvasObject {
+func buildBlankTree() *widget.Tree {
 	return widget.NewTreeWithStrings(map[string][]string{"": {"Nothing formatted yet."}})
 }
 
@@ -328,6 +364,8 @@ func handlePasteFromClipboardButtonClick() {
 func handleClearInputButtonClick() {
 	InputEntry.SetText("")
 	OutputEntry.SetText("")
+	TreeWidget = buildBlankTree()
+	updateTreeOutputInGui("", "", false, TreeWidget)
 }
 
 func handleCopyOutputButtonClick() {
@@ -344,7 +382,7 @@ func handleOnChangeOfInputEntry(_ string) {
 }
 
 func handleHideFormularClick(newValue bool) {
-	FormatOptions.SetHideFormular(newValue)
+	FormatOptions.SetHideFormulars(newValue)
 
 	changeDisableStateOfCheckWidget(!newValue, ShowCompactFormularsCheck)
 
@@ -356,7 +394,7 @@ func handleHideFormularClick(newValue bool) {
 }
 
 func handleShowCompactFormularClick(newValue bool) {
-	FormatOptions.SetShowCompactFormular(newValue)
+	FormatOptions.SetShowCompactFormulars(newValue)
 
 	changeDisableStateOfCheckWidget(newValue, ShowVariableNamesCheck)
 
@@ -386,19 +424,21 @@ func formatInput() {
 		explainApiDocument, err := util.ExtractDataFromExplainAPI(InputEntry.Text)
 		if err != nil {
 			newTextOutput = err.Error()
+			return
 		}
 
 		newTextOutput = util.FormatExplainApiDocument(explainApiDocument, FormatOptions)
 		OutputEntry.SetText(newTextOutput)
 
-		updateTreeOutputInGui(explainApiDocument, util.FormatExplainApiDocumentAsGuiTree(explainApiDocument))
+		TreeWidget = util.FormatExplainApiDocumentAsGuiTree(explainApiDocument)
+		updateTreeOutputInGui(explainApiDocument.Indexname, explainApiDocument.DocumentId, explainApiDocument.Matched, TreeWidget)
 	}
 }
 
-func updateTreeOutputInGui(explainApiDocument util.ExplainAPIDocument, newTree fyne.CanvasObject) {
-	TreeIndexnameLabel.SetText(fmt.Sprintf(IndexNameFormat, explainApiDocument.Indexname))
-	TreeDocumentIdLabel.SetText(fmt.Sprintf(DocumentIdFormat, explainApiDocument.DocumentId))
-	TreeMatchedLabel.SetText(fmt.Sprintf(MatchedFormat, explainApiDocument.Matched))
+func updateTreeOutputInGui(indexname string, documentId string, matched bool, newTree fyne.CanvasObject) {
+	TreeIndexnameLabel.SetText(fmt.Sprintf(IndexNameFormat, indexname))
+	TreeDocumentIdLabel.SetText(fmt.Sprintf(DocumentIdFormat, documentId))
+	TreeMatchedLabel.SetText(fmt.Sprintf(MatchedFormat, matched))
 
 	TreeOutputContainer.Remove(TreeOutput)
 	TreeOutputContainer.Add(newTree)

@@ -1,11 +1,12 @@
 # ESEF
 *ElasticSearch Explain (API) Formatter*
 
-![alt text](assets/image/ESEF_Screenshot.png "ESEF Screenshot")
-
 ESEF converts the output of ES explain API to a more readable format.
 
-Two types of formats are supported:
+![alt text](assets/image/ESEF_Screenshot_1.png "ESEF Screenshot - Text Mode")
+![alt text](assets/image/ESEF_Screenshot_2.png "ESEF Screenshot - Gui Mode")
+
+Three types of formats are currently supported:
 
 - **Simple**
   
@@ -53,6 +54,9 @@ Two types of formats are supported:
           ├─ 1.000000 (dl, length of field)
           └─ 1.000000 (avgdl, average length of field)
   ```
+- **GUI**
+  
+  Creates a clickable version of the tree for you to explore and discover.
 
 ## Development
 
@@ -74,7 +78,7 @@ rm ESEF
 
 go build ESEF
 cd dist/
-fyne package -os darwin -appVersion "0.4.0" -icon ../icon.png -sourceDir ../
+fyne package -os darwin -appVersion "0.5.0" -icon ../icon.png -sourceDir ../
 ```
 
 ### Good to know

@@ -2,3 +2,4 @@ ESEF
 *.zip
 *.app
 /dist
+.DS_Store
