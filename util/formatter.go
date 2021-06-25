@@ -2,27 +2,32 @@ package util
 
 import (
 	"fmt"
+	"fyne.io/fyne/v2/widget"
 	"regexp"
 	"strings"
 )
 
-const IdfRegex = `idf, computed as log\(1 \+ \(N - n \+ 0\.5\) \/ \(n \+ 0\.5\)\) from:`
-const TfRegex = `tf, computed as freq \/ \(freq \+ k1 \* \(1 \- b \+ b \* dl \/ avgdl\)\) from:`
+const (
+	DefaultExplanationIndentation = "  "
+	EmptySpace                    = "   "
+	IShape                        = "│  "
+	TShape                        = "├─ "
+	LShape                        = "└─ "
+	EmptyStartString              = ""
 
-const DefaultExplanationIndentation = "  "
-const EmptySpace = "   "
-const IShape = "│  "
-const TShape = "├─ "
-const LShape = "└─ "
+	IDF = "idf"
+	TF  = "tf"
 
-const EmptyStartString = ""
+	IdfRegex = `idf, computed as log\(1 \+ \(N - n \+ 0\.5\) \/ \(n \+ 0\.5\)\) from:`
+	TfRegex  = `tf, computed as freq \/ \(freq \+ k1 \* \(1 \- b \+ b \* dl \/ avgdl\)\) from:`
 
-const DocumentInfoHeaderFormat = "index: %s\ndocumentId: %s\nmatched: %t\nexplanation:\n%s"
-const ExplainNodeFormat = "%s%g (%s)\n"
-const IdfFormularFormat = "idf, computed as log(1 + (%g - %g + 0.5) / (%g + 0.5))"                                                  // N, n, n
-const IdfFormularDetailedFormat = "idf, computed as log(1 + (%g [N] - %g [n] + 0.5) / (%g [n] + 0.5))"                              // N, n, n
-const TfFormularFormat = "tf, computed as %g / (%g + %g * (1 - %g + %g * %g / %g))"                                                 // freq, freq, k1, b, b, dl, avgdl
-const TfFormularDetailedFormat = "tf, computed as %g [freq] / (%g [freq] + %g [k1] * (1 - %g [b] + %g [b] * %g [dl] / %g [avgdl]))" // freq, freq, k1, b, b, dl, avgdl
+	DocumentInfoHeaderFormat  = "index: %s\ndocumentId: %s\nmatched: %t\nexplanation:\n%s"
+	ExplainNodeFormat         = "%s%g (%s)\n"
+	IdfFormularFormat         = "idf, computed as log(1 + (%g - %g + 0.5) / (%g + 0.5))"                                           // N, n, n
+	IdfFormularDetailedFormat = "idf, computed as log(1 + (%g [N] - %g [n] + 0.5) / (%g [n] + 0.5))"                               // N, n, n
+	TfFormularFormat          = "tf, computed as %g / (%g + %g * (1 - %g + %g * %g / %g))"                                         // freq, freq, k1, b, b, dl, avgdl
+	TfFormularDetailedFormat  = "tf, computed as %g [freq] / (%g [freq] + %g [k1] * (1 - %g [b] + %g [b] * %g [dl] / %g [avgdl]))" // freq, freq, k1, b, b, dl, avgdl
+)
 
 func FormatExplainApiDocument(doc ExplainAPIDocument, formatOptions *FormatOptions) string {
 	var formattedExplanation string
@@ -33,7 +38,42 @@ func FormatExplainApiDocument(doc ExplainAPIDocument, formatOptions *FormatOptio
 		formattedExplanation = formatExplainNodesToSimpleFormat(0, formatOptions, doc.Explanation)
 	}
 
-	return fmt.Sprintf(DocumentInfoHeaderFormat, doc.Index, doc.DocumentId, doc.Matched, formattedExplanation)
+	return fmt.Sprintf(DocumentInfoHeaderFormat, doc.Indexname, doc.DocumentId, doc.Matched, formattedExplanation)
+}
+
+func FormatExplainApiDocumentAsGuiTree(nodes ExplainAPIDocument) *widget.Tree {
+	data := map[string][]string{
+		"":            {"Explanation"},
+		"Explanation": {},
+	}
+
+	var key = formatNodeLine(nodes.Explanation.Value, nodes.Explanation.Description)
+	data["Explanation"] = append(data["Explanation"], key)
+
+	extractDataTree(nodes.Explanation, data, key)
+
+	tree := widget.NewTreeWithStrings(data)
+	tree.OpenAllBranches()
+	return tree
+}
+
+func extractDataTree(node ExplanationNode, data map[string][]string, key string) {
+	if len(node.Details) > 0 {
+		data[key] = []string{}
+
+		for _, node := range node.Details {
+			value := formatNodeLine(node.Value, node.Description)
+			data[key] = append(data[key], value)
+
+			if len(node.Details) > 0 {
+				extractDataTree(node, data, value)
+			}
+		}
+	}
+}
+
+func formatNodeLine(value float64, description string) string {
+	return fmt.Sprintf("%g = %s", value, description)
 }
 
 func formatExplainNodesToSimpleFormat(treeLevel int, formatOptions *FormatOptions, nodes ...ExplanationNode) string {
@@ -46,10 +86,14 @@ func formatExplainNodesToSimpleFormat(treeLevel int, formatOptions *FormatOption
 
 		matchesTf, matchesIdf := matchesIdfOrTfFormular([]byte(node.Description))
 
-		if formatOptions.ShowCompactFunction && matchesIdf {
-			showDeeperNodes, result = formatLineWithIdfFormular(node, result, indentation, formatOptions)
-		} else if formatOptions.ShowCompactFunction && matchesTf {
-			showDeeperNodes, result = formatLineWithTfFormular(node, result, indentation, formatOptions)
+		if (formatOptions.ShowCompactFormulars || formatOptions.HideFormulars) && (matchesTf || matchesIdf) {
+			showDeeperNodes = false
+		}
+
+		if matchesIdf {
+			result = formatLineWithIdfFormular(node, result, indentation, formatOptions)
+		} else if matchesTf {
+			result = formatLineWithTfFormular(node, result, indentation, formatOptions)
 		} else {
 			result += fmt.Sprintf(ExplainNodeFormat, indentation, node.Value, node.Description)
 		}
@@ -60,34 +104,6 @@ func formatExplainNodesToSimpleFormat(treeLevel int, formatOptions *FormatOption
 	}
 
 	return result
-}
-
-func formatLineWithTfFormular(node ExplanationNode,
-	result string,
-	indentation string,
-	formatOptions *FormatOptions) (bool, string) {
-
-	freq := node.Details[0].Value
-	k1 := node.Details[1].Value
-	b := node.Details[2].Value
-	dl := node.Details[3].Value
-	avgdl := node.Details[4].Value
-
-	result += fmt.Sprintf(ExplainNodeFormat, indentation, node.Value,
-		formatTfFunction(freq, k1, b, dl, avgdl, formatOptions.ShowVariableNamesInFormular))
-	return false, result
-}
-
-func formatLineWithIdfFormular(node ExplanationNode,
-	result string,
-	indentation string,
-	formatOptions *FormatOptions) (bool, string) {
-
-	N := node.Details[0].Value
-	n := node.Details[1].Value
-
-	result += fmt.Sprintf(ExplainNodeFormat, indentation, node.Value, formatIdfFormular(N, n, formatOptions.ShowVariableNamesInFormular))
-	return false, result
 }
 
 func formatExplainNodesToTreeFormat(previousIndentation string,
@@ -105,10 +121,14 @@ func formatExplainNodesToTreeFormat(previousIndentation string,
 
 		matchesTf, matchesIdf := matchesIdfOrTfFormular([]byte(node.Description))
 
-		if formatOptions.ShowCompactFunction && matchesIdf {
-			showDeeperNodes, result = formatLineWithIdfFormular(node, result, previousIndentation+lineSymbol, formatOptions)
-		} else if formatOptions.ShowCompactFunction && matchesTf {
-			showDeeperNodes, result = formatLineWithTfFormular(node, result, previousIndentation+lineSymbol, formatOptions)
+		if (formatOptions.ShowCompactFormulars || formatOptions.HideFormulars) && (matchesTf || matchesIdf) {
+			showDeeperNodes = false
+		}
+
+		if matchesIdf {
+			result = formatLineWithIdfFormular(node, result, previousIndentation+lineSymbol, formatOptions)
+		} else if matchesTf {
+			result = formatLineWithTfFormular(node, result, previousIndentation+lineSymbol, formatOptions)
 		} else {
 			result += fmt.Sprintf(ExplainNodeFormat, previousIndentation+lineSymbol, node.Value, node.Description)
 		}
@@ -122,6 +142,33 @@ func formatExplainNodesToTreeFormat(previousIndentation string,
 	return result
 }
 
+func formatLineWithTfFormular(node ExplanationNode,
+	result string,
+	indentation string,
+	formatOptions *FormatOptions) string {
+
+	freq := node.Details[0].Value
+	k1 := node.Details[1].Value
+	b := node.Details[2].Value
+	dl := node.Details[3].Value
+	avgdl := node.Details[4].Value
+
+	result += fmt.Sprintf(ExplainNodeFormat, indentation, node.Value, formatTfFunction(freq, k1, b, dl, avgdl, formatOptions))
+	return result
+}
+
+func formatLineWithIdfFormular(node ExplanationNode,
+	result string,
+	indentation string,
+	formatOptions *FormatOptions) string {
+
+	N := node.Details[0].Value
+	n := node.Details[1].Value
+
+	result += fmt.Sprintf(ExplainNodeFormat, indentation, node.Value, formatIdfFormular(N, n, formatOptions))
+	return result
+}
+
 func matchesIdfOrTfFormular(descriptionAsByteArray []byte) (bool, bool) {
 	tf := regexp.MustCompile(TfRegex)
 	idf := regexp.MustCompile(IdfRegex)
@@ -131,16 +178,20 @@ func matchesIdfOrTfFormular(descriptionAsByteArray []byte) (bool, bool) {
 	return matchesTf, matchesIdf
 }
 
-func formatIdfFormular(N float64, n float64, showVariableNames bool) string {
-	if showVariableNames {
+func formatIdfFormular(N float64, n float64, formatOptions *FormatOptions) string {
+	if formatOptions.HideFormulars {
+		return IDF
+	} else if formatOptions.ShowVariableNamesInFormulars {
 		return fmt.Sprintf(IdfFormularDetailedFormat, N, n, n)
 	} else {
 		return fmt.Sprintf(IdfFormularFormat, N, n, n)
 	}
 }
 
-func formatTfFunction(freq float64, k1 float64, b float64, dl float64, avgdl float64, showVariableNames bool) string {
-	if showVariableNames {
+func formatTfFunction(freq float64, k1 float64, b float64, dl float64, avgdl float64, formatOptions *FormatOptions) string {
+	if formatOptions.HideFormulars {
+		return TF
+	} else if formatOptions.ShowVariableNamesInFormulars {
 		return fmt.Sprintf(TfFormularDetailedFormat, freq, freq, k1, b, b, dl, avgdl)
 	} else {
 		return fmt.Sprintf(TfFormularFormat, freq, freq, k1, b, b, dl, avgdl)

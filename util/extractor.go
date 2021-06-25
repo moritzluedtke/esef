@@ -8,7 +8,7 @@ import (
 const ErrorMessage = "Error during JSON Data extraction.\n\nPlease check your input string for any json errors."
 
 type ExplainAPIDocument struct {
-	Index       string          `json:"_index"`
+	Indexname   string          `json:"_index"`
 	Type        string          `json:"_type"`
 	DocumentId  string          `json:"_id"`
 	Matched     bool            `json:"matched"`
