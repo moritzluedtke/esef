@@ -73,8 +73,8 @@ go get -u
 ### Package locally
 ```shell script
 # Build for Mac
-rm -r ESEF.app
 rm ESEF
+rm -rf dist/*
 
 go build ESEF
 cd dist/
