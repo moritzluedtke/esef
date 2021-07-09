@@ -1,24 +1,24 @@
 package util
 
 type FormatOptions struct {
-	ShowCompactFormulars         bool
-	ShowVariableNamesInFormulars bool
-	HideFormulars                bool
-	UseTreeFormat                bool
+	_ShowCompactFormulars         bool
+	_ShowVariableNamesInFormulars bool
+	_HideFormulars                bool
+	_UseTreeFormat                bool
 }
 
 func (fo *FormatOptions) SetShowCompactFormulars(newValue bool) {
-	fo.ShowCompactFormulars = newValue
+	fo._ShowCompactFormulars = newValue
 }
 
 func (fo *FormatOptions) SetShowVariableNamesInFormulars(newValue bool) {
-	fo.ShowVariableNamesInFormulars = newValue
+	fo._ShowVariableNamesInFormulars = newValue
 }
 
 func (fo *FormatOptions) SetHideFormulars(newValue bool) {
-	fo.HideFormulars = newValue
+	fo._HideFormulars = newValue
 }
 
 func (fo *FormatOptions) SetUseTreeFormat(newValue bool) {
-	fo.UseTreeFormat = newValue
+	fo._UseTreeFormat = newValue
 }

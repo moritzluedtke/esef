@@ -1,14 +1,13 @@
 package main
 
 import (
+	"ESEF/util"
 	"fmt"
 	"fyne.io/fyne/v2"
 	"fyne.io/fyne/v2/app"
 	"fyne.io/fyne/v2/container"
 	"fyne.io/fyne/v2/theme"
 	"fyne.io/fyne/v2/widget"
-
-	"ESEF/util"
 )
 
 const (
@@ -32,8 +31,8 @@ const (
 	ShowTextOutputText                 = "Show Text Output"
 	SimpleFormatText                   = "Simple Format"
 	TreeFormatText                     = "Tree Format"
-	InputOptionExplainApiText          = "Explain API"
-	InputOptionSearchProfilerText      = "Search Profiler"
+	InputOptionExplainApiText          = util.ExplainApiOptionAsText
+	InputOptionSearchProfilerText      = util.SearchProfilerOptionAsText
 
 	SplitContainerOffset   = 0.35
 	SystemDefaultThemeName = "system default"
@@ -46,6 +45,7 @@ const (
 )
 
 var FormatOptions = new(util.FormatOptions)
+var InputOptions = new(util.InputOptions)
 
 var MainWindowSize = fyne.NewSize(1400, 800)
 var SettingsWindowSize = fyne.NewSize(400, 200)
@@ -59,8 +59,8 @@ var CopyButton *widget.Button
 var HideFormularsCheck *widget.Check
 var ShowCompactFormularsCheck *widget.Check
 var ShowVariableNamesCheck *widget.Check
-var FormatRadioGroup *widget.RadioGroup
-var OutputStyleRadioGroup *widget.RadioGroup
+var FormatRadioGroup = new(widget.RadioGroup)
+var OutputStyleRadioGroup = new(widget.RadioGroup)
 var InputOptionsRadioGroup *widget.RadioGroup
 var TextOutputArea fyne.CanvasObject
 var GuiOutputArea fyne.CanvasObject
@@ -178,10 +178,19 @@ func handleGuiTextOutputRadioGroupToggle(newValue string) {
 }
 
 func handleInputOptionRadioGroupToggle(newValue string) {
-	// For later use
-	//if newValue == InputOptionExplainApiText {
-	//} else {
-	//}
+	if newValue == InputOptionExplainApiText {
+		InputOptions.SetCurrentInputToExplainApi()
+
+		FormatRadioGroup.Show()
+		OutputStyleRadioGroup.Show()
+		TextOutputFormatOptions.Show()
+	} else {
+		InputOptions.SetCurrentInputToSearchProfiler()
+
+		FormatRadioGroup.Hide()
+		OutputStyleRadioGroup.Hide()
+		TextOutputFormatOptions.Hide()
+	}
 }
 
 func buildInputOutputArea() *container.Split {
@@ -218,8 +227,7 @@ func buildInputArea() *widget.Card {
 		InputLabelText,
 		"",
 		container.NewBorder(
-			//buildInputOptionsArea(), // for later use
-			nil,
+			buildInputOptionsArea(),
 			container.NewAdaptiveGrid(
 				2,
 				widget.NewButton(PasteFromClipboardButtonLabel, handlePasteFromClipboardButtonClick),
@@ -418,21 +426,31 @@ func changeDisabledStateOfCopyButton(newText string) {
 }
 
 func formatInput() {
-	if InputEntry.Text != "" {
-		var newTextOutput string
-
-		explainApiDocument, err := util.ExtractDataFromExplainAPI(InputEntry.Text)
-		if err != nil {
-			newTextOutput = err.Error()
-			return
+	if InputEntry.Text == "" {
+		return
+	} else {
+		if InputOptions.GetCurrentInputOption() == InputOptionExplainApiText {
+			formatExplainApiInput()
+		} else {
+			formatSearchProfilerInput()
 		}
-
-		newTextOutput = util.FormatExplainApiDocument(explainApiDocument, FormatOptions)
-		OutputEntry.SetText(newTextOutput)
-
-		TreeWidget = util.FormatExplainApiDocumentAsGuiTree(explainApiDocument)
-		updateTreeOutputInGui(explainApiDocument.Indexname, explainApiDocument.DocumentId, explainApiDocument.Matched, TreeWidget)
 	}
+}
+
+func formatExplainApiInput() {
+	var newTextOutput string
+
+	explainApiDocument, err := util.ExtractDataFromExplainAPI(InputEntry.Text)
+	if err != nil {
+		OutputEntry.SetText(err.Error())
+		return
+	}
+
+	newTextOutput = util.FormatExplainApiDocument(explainApiDocument, FormatOptions)
+	OutputEntry.SetText(newTextOutput)
+
+	TreeWidget = util.FormatExplainApiDocumentAsGuiTree(explainApiDocument)
+	updateTreeOutputInGui(explainApiDocument.Indexname, explainApiDocument.DocumentId, explainApiDocument.Matched, TreeWidget)
 }
 
 func updateTreeOutputInGui(indexname string, documentId string, matched bool, newTree fyne.CanvasObject) {
@@ -445,6 +463,10 @@ func updateTreeOutputInGui(indexname string, documentId string, matched bool, ne
 	TreeOutputContainer.Refresh()
 
 	TreeOutput = newTree
+}
+
+func formatSearchProfilerInput() {
+	OutputEntry.SetText(util.FormatSearchProfilerOutput(InputEntry.Text))
 }
 
 func sendOSNotification(message string) {
