@@ -5,6 +5,7 @@ ESEF converts the output of Elasticsearchs Explain API or Kibanas Search Profile
 
 ![alt text](assets/image/ESEF_Screenshot_1.png "ESEF Screenshot - Text Mode")
 ![alt text](assets/image/ESEF_Screenshot_2.png "ESEF Screenshot - Gui Mode")
+![alt text](assets/image/ESEF_Screenshot_3.png "ESEF Screenshot - Search Profiler Formatter")
 
 ## Formatters
 
