@@ -5,7 +5,7 @@ import (
 	"errors"
 )
 
-const ErrorMessage = "Error during JSON Data extraction.\n\nPlease check your input string for any json errors."
+const ErrorMessage = "Error during JSON Data extraction.\n\nPlease check your input string for any JSON errors."
 
 type ExplainAPIDocument struct {
 	Indexname   string          `json:"_index"`

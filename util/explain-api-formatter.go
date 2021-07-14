@@ -32,7 +32,7 @@ const (
 func FormatExplainApiDocument(doc ExplainAPIDocument, formatOptions *FormatOptions) string {
 	var formattedExplanation string
 
-	if formatOptions.UseTreeFormat {
+	if formatOptions._UseTreeFormat {
 		formattedExplanation = formatExplainNodesToTreeFormat(EmptyStartString, true, formatOptions, doc.Explanation)
 	} else {
 		formattedExplanation = formatExplainNodesToSimpleFormat(0, formatOptions, doc.Explanation)
@@ -86,7 +86,7 @@ func formatExplainNodesToSimpleFormat(treeLevel int, formatOptions *FormatOption
 
 		matchesTf, matchesIdf := matchesIdfOrTfFormular([]byte(node.Description))
 
-		if (formatOptions.ShowCompactFormulars || formatOptions.HideFormulars) && (matchesTf || matchesIdf) {
+		if (formatOptions._ShowCompactFormulars || formatOptions._HideFormulars) && (matchesTf || matchesIdf) {
 			showDeeperNodes = false
 		}
 
@@ -121,7 +121,7 @@ func formatExplainNodesToTreeFormat(previousIndentation string,
 
 		matchesTf, matchesIdf := matchesIdfOrTfFormular([]byte(node.Description))
 
-		if (formatOptions.ShowCompactFormulars || formatOptions.HideFormulars) && (matchesTf || matchesIdf) {
+		if (formatOptions._ShowCompactFormulars || formatOptions._HideFormulars) && (matchesTf || matchesIdf) {
 			showDeeperNodes = false
 		}
 
@@ -179,9 +179,9 @@ func matchesIdfOrTfFormular(descriptionAsByteArray []byte) (bool, bool) {
 }
 
 func formatIdfFormular(N float64, n float64, formatOptions *FormatOptions) string {
-	if formatOptions.HideFormulars {
+	if formatOptions._HideFormulars {
 		return IDF
-	} else if formatOptions.ShowVariableNamesInFormulars {
+	} else if formatOptions._ShowVariableNamesInFormulars {
 		return fmt.Sprintf(IdfFormularDetailedFormat, N, n, n)
 	} else {
 		return fmt.Sprintf(IdfFormularFormat, N, n, n)
@@ -189,9 +189,9 @@ func formatIdfFormular(N float64, n float64, formatOptions *FormatOptions) strin
 }
 
 func formatTfFunction(freq float64, k1 float64, b float64, dl float64, avgdl float64, formatOptions *FormatOptions) string {
-	if formatOptions.HideFormulars {
+	if formatOptions._HideFormulars {
 		return TF
-	} else if formatOptions.ShowVariableNamesInFormulars {
+	} else if formatOptions._ShowVariableNamesInFormulars {
 		return fmt.Sprintf(TfFormularDetailedFormat, freq, freq, k1, b, b, dl, avgdl)
 	} else {
 		return fmt.Sprintf(TfFormularFormat, freq, freq, k1, b, b, dl, avgdl)
