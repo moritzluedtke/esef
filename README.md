@@ -1,10 +1,14 @@
 # ESEF
 *ElasticSearch Explain (API) Formatter*
 
-ESEF converts the output of ES explain API to a more readable format.
+ESEF converts the output of Elasticsearchs Explain API or Kibanas Search Profiler to a more readable format.
 
 ![alt text](assets/image/ESEF_Screenshot_1.png "ESEF Screenshot - Text Mode")
 ![alt text](assets/image/ESEF_Screenshot_2.png "ESEF Screenshot - Gui Mode")
+
+## Formatters
+
+### Explain API
 
 Three types of formats are currently supported:
 
@@ -57,6 +61,11 @@ Three types of formats are currently supported:
 - **GUI**
   
   Creates a clickable version of the tree for you to explore and discover.
+
+### Search Profiler
+
+In Kibanas Search Profiler there is a way to output the query with the synonyms and all logical operatos (AND, OR). This output is a one liner and very hard to read. Just put this string into ESEF and it will format it for you.
+
 
 ## Development
 
