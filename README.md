@@ -66,6 +66,10 @@ Three types of formats are currently supported:
 
 In Kibanas Search Profiler there is a way to output the query with the synonyms and all logical operatos (AND, OR). This output is a one liner and very hard to read. Just put this string into ESEF and it will format it for you.
 
+#### How to find the Search Profiler output
+
+![alt text](assets/image/Kibana_Search_Profiler_1.png "Kibana Search Profiler Step 1")
+![alt text](assets/image/Kibana_Search_Profiler_2.png "Kibana Search Profiler Step 2")
 
 ## Development
 
@@ -87,7 +91,7 @@ rm -rf dist/*
 
 go build ESEF
 cd dist/
-fyne package -os darwin -appVersion "0.5.0" -icon ../icon.png -sourceDir ../
+fyne package -os darwin -appVersion "0.6.0" -icon ../icon.png -sourceDir ../
 ```
 
 ### Good to know
