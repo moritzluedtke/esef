@@ -1,5 +1,5 @@
 # ESEF
-*ElasticSearch Explain (API) Formatter*
+*Elasticsearch Explain (API) Formatter*
 
 ESEF converts the output of Elasticsearchs Explain API or Kibanas Search Profiler to a more readable format.
 
