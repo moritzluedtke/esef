@@ -11,7 +11,7 @@ ESEF converts the output of Elasticsearchs Explain API or Kibanas Search Profile
 
 ### Explain API
 
-Three types of formats are currently supported:
+Three types of output formats are currently available:
 
 - **Simple**
   
